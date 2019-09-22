@@ -23,12 +23,26 @@ ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. E
 
 5. React.JS
 
-## To run 
 
-1. Backend
 
-   `nodemon index.js`
+## Running the App	
 
-2. Frontend
+### Backend 
 
-   `yarnpkg start`
+`nodemon index.js`
+
+### Frontend
+
+`yarkpkg start`
+
+### Databse 
+
+See `esm.sql` for a copy of databse schema. **Recommended**: running phpMyAdmin at `localhost:8889`
+
+
+
+## Credits 
+
+* **Bixing Xie** - (https://github.com/bixingxie)
+* **Bronson Lee** - (https://github.com/bkl263)
+* **Mengzhe Ding** - (https://github.com/MengzheDing)
