@@ -11,46 +11,59 @@ class App extends Component {
     this.state = {
       isAuthenticated: false,
       user: null,
-      users: [],
-      newUser: {
-        name: 'John Doe',
-        age: 30,
-        email: 'john.doe@gmail.com'
-      }
     };
   }
 
-  componentDidMount() {
-    this.getUsers();
-  }
+  // componentDidMount() {
+  //   this.getUsers();
+  // }
 
   // Fetches data from localhost:4000
-  getUsers = () => {
-    fetch('http://localhost:4000/users')
-      .then(response => response.json())
-      .then(response => this.setState({ users: response.data}))
-      .catch(err => console.log(err));
-  };
+  // getUsers = () => {
+  //   fetch('http://localhost:4000/users')
+  //     .then(response => response.json())
+  //     .then(response => this.setState({ users: response.data}))
+  //     .catch(err => console.log(err));
+  // };
+
+  // checkUser = () => {
+  //   const email = this.state.user.email
+  //   fetch(`http://localhost:4000/users/check?email=${email}`)
+  //     .then(response => response.json())
+  //     .then(response => response.data)
+  //     .catch(err => console.log(err));
+  // }
 
   addUser = _ => {
-    const {newUser} = this.state;
-    console.log(newUser.name, newUser.age, newUser.email)
+    const newUser = this.state.user
     fetch(`http://localhost:4000/users/add?name=${newUser.name}&age=${newUser.age}&email=${newUser.email}`)
-      .then(this.getUsers())
+      .catch(err => console.log(err));
+  }
+  //
+  // renderUser = ({ name, age, email }) =>
+  // <div key={email}>{name} {age} {email} </div>
+  newUserCheck = (email) => {
+    return fetch(`http://localhost:4000/users/check?email=${email}`)
+      .then(response => response.json())
+      .then(response => response.data)
+      .then(function(response) {
+        if(response.length === 0) { return true }
+        else { return false }
+      })
       .catch(err => console.log(err));
   }
 
-  renderUser = ({ name, age, email }) =>
-  <div key={email}>{name} {age} {email} </div>
-
   googleResponse = (response) => {
+    console.log(response)
     this.setState({
       isAuthenticated: true,
+      token: response.token_id,
       user: {
         email: response.profileObj.email,
         name: response.profileObj.name
       }
     })
+    this.newUserCheck(response.profileObj.email).then(response => this.setState( {newUser: response} ))
   }
 
   loginFail = (response) => {
@@ -62,7 +75,8 @@ class App extends Component {
   }
 
   render () {
-    const { users, newUser } = this.state
+    // const { users, newUser } = this.setState
+    if(this.state.newUser) { }
     let content = !!this.state.isAuthenticated ? (
       <div>
         <p>{this.state.user.name} Logged In</p>
@@ -80,6 +94,7 @@ class App extends Component {
           buttonText="Login"
           onSuccess={this.googleResponse}
           onFailure={this.loginFail}
+          scope= {config.GOOGLE_SCOPE_API}
         ></GoogleLogin>
       </div>
     )
@@ -87,19 +102,6 @@ class App extends Component {
     return (
       <div className="App">
         {content}
-        {/* {users.map(this.renderUser)}} not sure what this does but this bugs the App for some reason*/}
-        <div>
-          <input
-            value={newUser.name}
-            onChange={e => this.setState({ newUser: {...newUser, name: e.target.value}})}/>
-          <input
-            value={newUser.age}
-            onChange={e => this.setState({ newUser: {...newUser, age: e.target.value}})} />
-          <input
-            value={newUser.email}
-            onChange={e => this.setState({ newUser: {...newUser, email: e.target.value}})}/>
-          <button onClick={this.addUser}> Add User </button>
-        </div>
       </div>
     );
   }

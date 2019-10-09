@@ -1,3 +1,4 @@
 {
-  "GOOGLE_CLIENT_ID": "885336022608-2vva1u3eeqaapaso65m1tkquf47bleo7.apps.googleusercontent.com"
+  "GOOGLE_CLIENT_ID": "885336022608-2vva1u3eeqaapaso65m1tkquf47bleo7.apps.googleusercontent.com",
+  "GOOGLE_SCOPE_API" : "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/user.birthday.read"
 }
