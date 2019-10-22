@@ -3,6 +3,22 @@ ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. E
 
 
 
+## State of the Program 
+
+**Finished:** 
+
+1. Authenticate the user via Gmail API on the frontend. 
+2. Pass the authorization token object to the backend (Node.JS). 
+3. Read a list of user emails in HTML format in the backend. 
+
+**To do**: 
+
+1. Parsing and grouping subscription emails. 
+
+2. Displaying parsed emails on the frontend. 
+
+   
+
 ## Dependencies 
 
 1. Npm

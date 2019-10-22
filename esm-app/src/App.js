@@ -1,107 +1,110 @@
-import React, {Component} from 'react';
-import './App.css';
-import { GoogleLogin } from 'react-google-login';
-import { GoogleLogout } from 'react-google-login';
-import config from './config.json';
+import React, { Component } from "react";
+import { GoogleLogin } from "react-google-login";
+import { GoogleLogout } from "react-google-login";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./App.css";
+import Card from "react-bootstrap/Card";
 
-class App extends Component {
+// Given by Google API
+const CLIENT_ID =
+  "602826117073-lt0upfo5khvk59dqf0u50ruor73rrg6n.apps.googleusercontent.com";
 
+class App extends React.Component {
   constructor() {
-    super()
+    super();
     this.state = {
       isAuthenticated: false,
-      user: null,
+      userEmail: null,
+      userName: null,
+      tokenObj: null,
+      token: ""
     };
   }
 
-  // componentDidMount() {
-  //   this.getUsers();
-  // }
-
-  // Fetches data from localhost:4000
-  // getUsers = () => {
-  //   fetch('http://localhost:4000/users')
-  //     .then(response => response.json())
-  //     .then(response => this.setState({ users: response.data}))
-  //     .catch(err => console.log(err));
-  // };
-
-  // checkUser = () => {
-  //   const email = this.state.user.email
-  //   fetch(`http://localhost:4000/users/check?email=${email}`)
-  //     .then(response => response.json())
-  //     .then(response => response.data)
-  //     .catch(err => console.log(err));
-  // }
-
-  addUser = _ => {
-    const newUser = this.state.user
-    fetch(`http://localhost:4000/users/add?name=${newUser.name}&age=${newUser.age}&email=${newUser.email}`)
-      .catch(err => console.log(err));
-  }
-  //
-  // renderUser = ({ name, age, email }) =>
-  // <div key={email}>{name} {age} {email} </div>
-  newUserCheck = (email) => {
-    return fetch(`http://localhost:4000/users/check?email=${email}`)
-      .then(response => response.json())
-      .then(response => response.data)
-      .then(function(response) {
-        if(response.length === 0) { return true }
-        else { return false }
-      })
-      .catch(err => console.log(err));
-  }
-
-  googleResponse = (response) => {
-    console.log(response)
-    this.setState({
-      isAuthenticated: true,
-      token: response.token_id,
-      user: {
-        email: response.profileObj.email,
-        name: response.profileObj.name
+  // Handles login
+  login = response => {
+    // console.log(response.getAuthResponse().id_token);
+    console.log(response.tokenObj);
+    this.setState(
+      {
+        isAuthenticated: true,
+        token: response.tokenId,
+        userEmail: response.profileObj.email,
+        userName: response.profileObj.name,
+        tokenObj: JSON.stringify(response.tokenObj)
+      },
+      () => {
+        this.sendUserToken();
       }
-    })
-    this.newUserCheck(response.profileObj.email).then(response => this.setState( {newUser: response} ))
-  }
+    );
+  };
 
-  loginFail = (response) => {
-    console.log(response)
-  }
+  // Send user token to backend
+  sendUserToken = () => {
+    // fetch("http://localhost:4000/get_token", {
+    //   method: "POST",
+    //   headers: {
+    //     crossDomain: true,
+    //     Authorization: this.state.token
+    //   }
+    // });
+    fetch("http://localhost:4000/get_token/", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      // body: JSON.stringify({
+      //   userEmail: this.state.userEmail,
+      //   userName: this.state.userName,
+      //   token: this.state.token
+      // })
+      body: this.state.tokenObj
+    });
+  };
 
+  // Handles logout
   logout = () => {
-    this.setState({ isAuthenticated: false, user: null })
-  }
+    this.setState({ isAuthenticated: false, token: "", user: null });
+  };
 
-  render () {
-    // const { users, newUser } = this.setState
-    if(this.state.newUser) { }
-    let content = !!this.state.isAuthenticated ? (
-      <div>
-        <p>{this.state.user.name} Logged In</p>
+  // Handles log in failure
+  onFailure = error => {
+    alert(error);
+  };
+
+  render() {
+    let button;
+    const cardText = this.state.isAuthenticated
+      ? this.state.userName
+      : "Please log in";
+
+    if (this.state.isAuthenticated) {
+      button = (
         <GoogleLogout
-          clientId = {config.GOOGLE_CLIENT_ID}
-          buttonText = "Logout"
-          onLogoutSuccess = {this.logout}
-        ></GoogleLogout>
-      </div>
-    ) :
-    (
-      <div>
+          clientId={CLIENT_ID}
+          buttonText="Logout"
+          onLogoutSuccess={this.logout}
+        />
+      );
+    } else {
+      button = (
         <GoogleLogin
-          clientId={config.GOOGLE_CLIENT_ID}
-          buttonText="Login"
-          onSuccess={this.googleResponse}
-          onFailure={this.loginFail}
-          scope= {config.GOOGLE_SCOPE_API}
-        ></GoogleLogin>
-      </div>
-    )
-
+          clientId={CLIENT_ID}
+          scope="https://mail.google.com/"
+          buttonText="Login with Google"
+          onSuccess={this.login}
+          onFailure={this.onFailure}
+          cookiePolicy={"single_host_origin"}
+        />
+      );
+    }
     return (
-      <div className="App">
-        {content}
+      <div>
+        <Card>
+          <Card.Body>Welcome, {cardText}</Card.Body>
+        </Card>
+        {button}
       </div>
     );
   }
