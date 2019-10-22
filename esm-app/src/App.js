@@ -41,24 +41,12 @@ class App extends React.Component {
 
   // Send user token to backend
   sendUserToken = () => {
-    // fetch("http://localhost:4000/get_token", {
-    //   method: "POST",
-    //   headers: {
-    //     crossDomain: true,
-    //     Authorization: this.state.token
-    //   }
-    // });
     fetch("http://localhost:4000/get_token/", {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json"
       },
-      // body: JSON.stringify({
-      //   userEmail: this.state.userEmail,
-      //   userName: this.state.userName,
-      //   token: this.state.token
-      // })
       body: this.state.tokenObj
     });
   };

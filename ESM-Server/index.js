@@ -17,11 +17,32 @@ app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: false })); // support encoded bodies
 app.use("/", router);
 
+
 /**
- * Gets a list of emails from the Gmail API. 
+ * Get number of emails under a particular label
+ * @param {OAuth2Client} auth    Authorization object.
+ * @param {string}       labelID Number of emails to get.
+ */
+const getNumberOfEmails = (auth, labelID) => {
+  const gmail = google.gmail({ version: "v1", auth });
+  gmail.users.labels
+    .get({
+      userId: "me",
+      id: labelID
+    })
+    .then(response => {
+      console.log("Message total: ", response.data.messagesTotal);
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+/**
+ * Gets a list of emails from the Gmail API.
  * @param {OAuth2Client} auth Authorization object.
  * @param {int} maxResults    Number of emails to get.
- * @param {function} callback Callback function to execute.  
+ * @param {function} callback Callback function to execute.
  */
 const getEmailList = (auth, maxResults, callback) => {
   const gmail = google.gmail({ version: "v1", auth });
@@ -32,14 +53,14 @@ const getEmailList = (auth, maxResults, callback) => {
       maxResults: maxResults
     })
     .then(response => {
-      callback(auth, response.data.messages) 
+      callback(auth, response.data.messages);
     });
-}
+};
 
 /**
- * Gets the email content of a particular email from the Gmail API. 
+ * Gets the email content of a particular email from the Gmail API.
  * @param {OAuth2Client} auth    Authorization object.
- * @param {string}       emailID The email ID to get. 
+ * @param {string}       emailID The email ID to get.
  */
 const getEmailContent = (auth, emailID) => {
   const gmail = google.gmail({ version: "v1", auth });
@@ -54,8 +75,8 @@ const getEmailContent = (auth, emailID) => {
 
       // Filters non-text/plain stuff
       parts.filter(function(part) {
-        return part.mimeType == 'text/plain'; 
-      })
+        return part.mimeType == "text/plain";
+      });
 
       parts.forEach(part => {
         if (part.body.data != null) {
@@ -69,11 +90,20 @@ const getEmailContent = (auth, emailID) => {
     });
 };
 
+/**
+ * Return an array of email content
+ * @param {OAuth2Client} auth      Authorization object.
+ * @param {Array}        emailList A list of email to print.
+ */
 const printEmailList = (auth, emailList) => {
-    return emailList.map(emailObj => (getEmailContent(auth, emailObj.id)))
-}
+  return emailList.map(emailObj => getEmailContent(auth, emailObj.id));
+};
 
-// Creates and initializes an authorization object given a token object
+/**
+ * Creates and initializes an authorization object given a token object
+ * @param {Object} tokenObj  Authorization token.
+ * @param {Array}  emailList A list of email to print
+ */
 const initoAuthObj = tokenObj => {
   const oAuth = new google.auth.OAuth2(
     CLIENT_ID,
@@ -85,19 +115,19 @@ const initoAuthObj = tokenObj => {
 };
 
 router.get("/", (req, res) => {
-  res.send("hi, this is the backend server");
+  res.send({ status: "SUCCUSS" });
 });
 
 router.post("/get_token", (req, res) => {
   try {
     const tokenObj = req.body;
     const oAuth = initoAuthObj(tokenObj);
-    getEmailList(oAuth, 5, printEmailList);
+    // getEmailList(oAuth, 10, printEmailList);
+    getNumberOfEmails(oAuth, "INBOX");
   } catch (e) {
     console.log(e);
   }
-  // getEmailContent(oAuth, "16de25e2b387e546");
-  // res.send({ status: "SUCCUSS" });
+  res.send({ status: "SUCCUSS" });
 });
 
 app.listen(4000, () => {
