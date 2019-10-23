@@ -4,6 +4,8 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 
+var anchorme = require("anchorme").default; // if installed via NPM
+
 const app = express();
 const router = express.Router();
 
@@ -50,7 +52,8 @@ const getEmailList = (auth, maxResults, callback) => {
     .list({
       userId: "me",
       includeSpamTrash: false,
-      maxResults: maxResults
+      maxResults: maxResults,
+      q: "subscription"
     })
     .then(response => {
       callback(auth, response.data.messages);
@@ -81,7 +84,8 @@ const getEmailContent = (auth, emailID) => {
       parts.forEach(part => {
         if (part.body.data != null) {
           const msg = Buffer.from(part.body.data, "base64").toString();
-          console.log(msg);
+          // console.log(msg);
+          getLink(msg);
         }
       });
     })
@@ -89,6 +93,47 @@ const getEmailContent = (auth, emailID) => {
       console.log(err);
     });
 };
+
+//finds an array of hyperlinks with the keywords hardcoded in the keyword array below.
+function getLink(msg){
+  var rst = []
+  const keyword = ["unsubscribe", "subscription"]
+  // getLinkKeyword(msg, "unsubscribe")
+
+  keyword.forEach(function(item, index){
+    console.log(item);
+    rst = rst.concat(getLinkKeyword(msg, item))
+  })
+}
+
+//finds an array of hyperlinks with the given keyword
+function getLinkKeyword(msg, keyword){
+  var rst = []
+  while (msg.search(keyword)){
+    var idx = msg.search(keyword)
+    const endstart = msg.slice(idx).search("</ *a *>")
+    var end
+    var start
+    if(endstart == -1){
+      break
+    }
+    else{
+      end = msg.slice(idx + endstart).search(">")
+      if(end == -1 || end > 50){
+        break
+      }
+      end = idx + endstart + end + 1
+      start = msg.lastIndexOf("<a", idx)
+    }
+    const range = msg.slice(start, end)
+    const link = anchorme(range)
+    console.log("%s: %s", keyword, link)
+    rst.push([keyword, link])
+
+    msg = msg.slice(idx,)
+  }
+}
+
 
 /**
  * Return an array of email content
@@ -122,7 +167,7 @@ router.post("/get_token", (req, res) => {
   try {
     const tokenObj = req.body;
     const oAuth = initoAuthObj(tokenObj);
-    // getEmailList(oAuth, 10, printEmailList);
+    getEmailList(oAuth, 5, printEmailList);
     getNumberOfEmails(oAuth, "INBOX");
   } catch (e) {
     console.log(e);
