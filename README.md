@@ -49,7 +49,7 @@ ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. E
 
 ### Frontend
 
-`yarkpkg start`
+`yarnpkg start`
 
 ### Databse 
 
