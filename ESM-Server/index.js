@@ -14,6 +14,13 @@ const CLIENT_SECRET = "ofE8qOpv4zKTJbWN9fwqJqXh";
 const CLIENT_ID =
   "602826117073-lt0upfo5khvk59dqf0u50ruor73rrg6n.apps.googleusercontent.com";
 
+
+
+// locally cached record of subscription. in the format of:
+// {vendorName : {typeofLink(subscription/unsubscribe) : [links]}}
+// therefore, accessing a link is subscription[vendorName]["subscription"][idx]
+let subscription ={};
+
 app.use(cors());
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: false })); // support encoded bodies
@@ -84,7 +91,6 @@ const getEmailContent = (auth, emailID) => {
       parts.forEach(part => {
         if (part.body.data != null) {
           const msg = Buffer.from(part.body.data, "base64").toString();
-          // console.log(msg);
           getLink(msg);
         }
       });
@@ -96,42 +102,58 @@ const getEmailContent = (auth, emailID) => {
 
 //finds an array of hyperlinks with the keywords hardcoded in the keyword array below.
 function getLink(msg){
-  var rst = []
-  const keyword = ["unsubscribe", "subscription"]
-  // getLinkKeyword(msg, "unsubscribe")
+  let links = {};
+  const keyword = ["unsubscribe", "subscription"];
 
-  keyword.forEach(function(item, index){
-    console.log(item);
-    rst = rst.concat(getLinkKeyword(msg, item))
-  })
+  keyword.forEach(function(item){
+    const linksfromkw = getLinkKeyword(msg, item)
+    if(linksfromkw.length > 0){
+      links[item] = linksfromkw
+    }
+  });
+  const vendor = randomStr(6, "abcdefghijklmnopqrstuvwxyz1234567890");
+  if(Object.keys(links).length > 0){
+    subscription[vendor] = links;
+  }
 }
 
 //finds an array of hyperlinks with the given keyword
 function getLinkKeyword(msg, keyword){
-  var rst = []
+  let rst = [];
   while (msg.search(keyword)){
-    var idx = msg.search(keyword)
-    const endstart = msg.slice(idx).search("</ *a *>")
-    var end
-    var start
+    var idx = msg.search(keyword);
+    const endstart = msg.slice(idx).search("</ *a *>");
+    var end;
+    var start;
     if(endstart == -1){
       break
     }
     else{
-      end = msg.slice(idx + endstart).search(">")
+      end = msg.slice(idx + endstart).search(">");
       if(end == -1 || end > 50){
         break
       }
-      end = idx + endstart + end + 1
-      start = msg.lastIndexOf("<a", idx)
+      end = idx + endstart + end + 1;
+      start = msg.lastIndexOf("<a", idx);
+    };
+    const range = msg.slice(start, end);
+    const link = anchorme(range);
+    if(link.length > 0){
+      rst.push([keyword, link])
     }
-    const range = msg.slice(start, end)
-    const link = anchorme(range)
-    console.log("%s: %s", keyword, link)
-    rst.push([keyword, link])
-
     msg = msg.slice(idx,)
   }
+  return rst
+}
+
+//a random string generator, used in getlink keyword to create dummy vendor name
+function randomStr(len, arr) {
+  var ans = '';
+  for (var i = len; i > 0; i--) {
+    ans +=
+        arr[Math.floor(Math.random() * arr.length)];
+  }
+  return ans;
 }
 
 
@@ -170,10 +192,29 @@ router.post("/get_token", (req, res) => {
     getEmailList(oAuth, 5, printEmailList);
     getNumberOfEmails(oAuth, "INBOX");
   } catch (e) {
+    res.send({ status: "SUCCUSS" });
     console.log(e);
   }
   res.send({ status: "SUCCUSS" });
 });
+
+router.get("/subscriptionManagement/", (req, res) =>{
+  try{
+    if (Object.keys(subscription).length > 1){
+      msg = JSON.stringify(subscription)
+      res.status(200).send(msg);
+    }else{
+      res.status(200).send("Fetching your subscription, please reload later");
+    }
+  }catch(err){
+    res.status(400).json({
+      message: "Error occured when collecting subscription",
+      err
+    });
+    res.send()
+  }
+})
+
 
 app.listen(4000, () => {
   console.log("ESM Server listening on port 4000");

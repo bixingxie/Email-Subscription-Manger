@@ -1,9 +1,10 @@
-import React, { Component } from "react";
+import React from "react";
 import { GoogleLogin } from "react-google-login";
 import { GoogleLogout } from "react-google-login";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./App.css";
 import Card from "react-bootstrap/Card";
+import { Button } from 'reactstrap';
 
 // Given by Google API
 const CLIENT_ID =
@@ -17,13 +18,13 @@ class App extends React.Component {
       userEmail: null,
       userName: null,
       tokenObj: null,
-      token: ""
+      token: "",
+      subscriptions:  {}
     };
   }
 
   // Handles login
   login = response => {
-    // console.log(response.getAuthResponse().id_token);
     console.log(response.tokenObj);
     this.setState(
       {
@@ -74,7 +75,7 @@ class App extends React.Component {
           buttonText="Logout"
           onLogoutSuccess={this.logout}
         />
-      );
+      )
     } else {
       button = (
         <GoogleLogin
@@ -87,12 +88,18 @@ class App extends React.Component {
         />
       );
     }
+
+
     return (
       <div>
         <Card>
           <Card.Body>Welcome, {cardText}</Card.Body>
         </Card>
         {button}
+        {this.state.isAuthenticated ? (
+            <Button onClick={() => {window.location.href="http://localhost:4000/subscriptionManagement/"}}>
+            View My Subscription</Button>
+        ) : null}
       </div>
     );
   }
