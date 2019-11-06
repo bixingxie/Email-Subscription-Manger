@@ -11,9 +11,46 @@ const CLIENT_ID =
   "602826117073-lt0upfo5khvk59dqf0u50ruor73rrg6n.apps.googleusercontent.com";
 
 class App extends React.Component {
+  render() {
+    var login = <Login />
+
+    return (
+      <div>
+      {login}
+      </div>
+    )
+  }
+}
+
+class SubManager extends React.Component {
+  constructor() {
+    super()
+    this.state = {data: null}
+  }
+  componentDidMount() {
+    var data = fetch('http://localhost:4000/subscriptionManagement/', {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      }})
+    .then(response => response.json())
+    .then(data => this.setState({ data: data }));
+  }
+  render() {
+    console.log(this.state.data)
+
+    return (
+      <div>
+      </div>
+    )
+  }
+}
+
+class Login extends React.Component {
   constructor() {
     super();
     this.state = {
+      managerOpen: false,
       isAuthenticated: false,
       userEmail: null,
       userName: null,
@@ -25,7 +62,6 @@ class App extends React.Component {
 
   // Handles login
   login = response => {
-    console.log(response.tokenObj);
     this.setState(
       {
         isAuthenticated: true,
@@ -62,6 +98,10 @@ class App extends React.Component {
     alert(error);
   };
 
+  showSubscriptions = () => {
+    this.setState({managerOpen: !this.state.managerOpen})
+  }
+
   render() {
     let button;
     const cardText = this.state.isAuthenticated
@@ -88,7 +128,10 @@ class App extends React.Component {
         />
       );
     }
-
+    let manager
+    if (this.state.managerOpen) {
+      manager = <SubManager />
+    }
 
     return (
       <div>
@@ -97,9 +140,9 @@ class App extends React.Component {
         </Card>
         {button}
         {this.state.isAuthenticated ? (
-            <Button onClick={() => {window.location.href="http://localhost:4000/subscriptionManagement/"}}>
-            View My Subscription</Button>
+            <Button onClick={this.showSubscriptions}>Manage Subscriptions</Button>
         ) : null}
+        {manager}
       </div>
     );
   }
