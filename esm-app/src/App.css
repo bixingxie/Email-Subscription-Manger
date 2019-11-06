@@ -20,3 +20,21 @@
 .App-link {
   color: #09d3ac;
 }
+
+h1 {
+  margin: 0px 0px 0px 0px;
+}
+.title {
+  text-align: center;
+  background-color: #FFD189;
+}
+
+.loginBox {
+  text-align: center;
+  margin-left: 40%;
+  margin-top: 1%;
+  width: 20%;
+  height: 75px;
+  background-color: #D3D3D3;
+  border-style: outset;
+}

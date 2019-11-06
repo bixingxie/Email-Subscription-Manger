@@ -34,11 +34,10 @@ class SubscriptionManager extends React.Component {
   }
 
   render() {
-    // console.log(this.state.data);
     const data = this.state.data
     if (data !== null) {
       Object.keys(data).forEach((item) => {
-        console.log(item) 
+        console.log(item)
         console.log(data[item]['subscription'][0][1])
       })
     }
@@ -58,7 +57,7 @@ class SubscriptionManager extends React.Component {
                 return (
                   <tr>
                     <td>{key}</td>
-                    <td>{data[key]['subscription'][0][1]}</td>
+                    {data[key]['subscription'][0][1]}
                   </tr>
                 )
               }
@@ -153,15 +152,22 @@ class Login extends React.Component {
     return (
       <div>
         <Jumbotron>
-          <h1 className="title"> Email Subscription Manager </h1>
-          <p className="subtitle">
-            {" "}
-            Welcome,{" "}
-            {this.state.isAuthenticated
-              ? this.state.userName
-              : "Please log in"}{" "}
-          </p>
-          {logInOrOutButton}
+          <div className="title">
+            <h1> Email Subscription Manager </h1>
+          </div>
+          <div className="login">
+            <div className="loginBox">
+                {" "}
+                Welcome,{" "}
+                {this.state.isAuthenticated
+                  ? this.state.userName
+                  : "Please log in"}{" "}
+
+            <div className="loginButton">
+              {logInOrOutButton}
+            </div>
+            </div>
+          </div>
           <hr />
           {this.state.isAuthenticated ? (
             <Button color="primary" onClick={this.showSubscriptions}>
