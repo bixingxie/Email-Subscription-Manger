@@ -1,10 +1,8 @@
 import React from "react";
 import { GoogleLogin } from "react-google-login";
 import { GoogleLogout } from "react-google-login";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { Jumbotron, Button, Table } from "reactstrap";
 import "./App.css";
-import Card from "react-bootstrap/Card";
-import { Button } from 'reactstrap';
 
 // Given by Google API
 const CLIENT_ID =
@@ -12,37 +10,63 @@ const CLIENT_ID =
 
 class App extends React.Component {
   render() {
-    var login = <Login />
+    var login = <Login />;
 
-    return (
-      <div>
-      {login}
-      </div>
-    )
+    return <div>{login}</div>;
   }
 }
 
-class SubManager extends React.Component {
+class SubscriptionManager extends React.Component {
   constructor() {
-    super()
-    this.state = {data: null}
+    super();
+    this.state = { data: null };
   }
+
   componentDidMount() {
-    var data = fetch('http://localhost:4000/subscriptionManagement/', {
+    fetch("http://localhost:4000/subscriptionManagement/", {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json"
-      }})
-    .then(response => response.json())
-    .then(data => this.setState({ data: data }));
+      }
+    })
+      .then(response => response.json())
+      .then(data => this.setState({ data: data }));
   }
+
   render() {
-    console.log(this.state.data)
+    // console.log(this.state.data);
+    const data = this.state.data
+    if (data !== null) {
+      Object.keys(data).forEach((item) => {
+        console.log(item) 
+        console.log(data[item]['subscription'][0][1])
+      })
+    }
 
     return (
-      <div>
-      </div>
-    )
+      <Table>
+        <thead>
+          <tr>
+            <th>Vendor Name</th>
+            <th>Unsubscribe Link</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            this.state.data ? Object.keys(this.state.data).map(
+              (key) => {
+                return (
+                  <tr>
+                    <td>{key}</td>
+                    <td>{data[key]['subscription'][0][1]}</td>
+                  </tr>
+                )
+              }
+            ) : null
+          }
+        </tbody>
+            </Table>
+    );
   }
 }
 
@@ -56,7 +80,7 @@ class Login extends React.Component {
       userName: null,
       tokenObj: null,
       token: "",
-      subscriptions:  {}
+      subscriptions: {}
     };
   }
 
@@ -99,25 +123,22 @@ class Login extends React.Component {
   };
 
   showSubscriptions = () => {
-    this.setState({managerOpen: !this.state.managerOpen})
-  }
+    this.setState({ managerOpen: !this.state.managerOpen });
+  };
 
   render() {
-    let button;
-    const cardText = this.state.isAuthenticated
-      ? this.state.userName
-      : "Please log in";
+    let logInOrOutButton;
 
     if (this.state.isAuthenticated) {
-      button = (
+      logInOrOutButton = (
         <GoogleLogout
           clientId={CLIENT_ID}
           buttonText="Logout"
           onLogoutSuccess={this.logout}
         />
-      )
+      );
     } else {
-      button = (
+      logInOrOutButton = (
         <GoogleLogin
           clientId={CLIENT_ID}
           scope="https://mail.google.com/"
@@ -128,21 +149,27 @@ class Login extends React.Component {
         />
       );
     }
-    let manager
-    if (this.state.managerOpen) {
-      manager = <SubManager />
-    }
 
     return (
       <div>
-        <Card>
-          <Card.Body>Welcome, {cardText}</Card.Body>
-        </Card>
-        {button}
-        {this.state.isAuthenticated ? (
-            <Button onClick={this.showSubscriptions}>Manage Subscriptions</Button>
-        ) : null}
-        {manager}
+        <Jumbotron>
+          <h1 className="title"> Email Subscription Manager </h1>
+          <p className="subtitle">
+            {" "}
+            Welcome,{" "}
+            {this.state.isAuthenticated
+              ? this.state.userName
+              : "Please log in"}{" "}
+          </p>
+          {logInOrOutButton}
+          <hr />
+          {this.state.isAuthenticated ? (
+            <Button color="primary" onClick={this.showSubscriptions}>
+              Manage Subscriptions
+            </Button>
+          ) : null}
+          {this.state.managerOpen ? <SubscriptionManager /> : null}
+        </Jumbotron>
       </div>
     );
   }
