@@ -90,18 +90,33 @@ const getEmailContent = (auth, emailID) => {
 
       parts.forEach(part => {
         if (part.body.data != null) {
+          const header = response.data.payload.headers
           const msg = Buffer.from(part.body.data, "base64").toString();
-          getLink(msg);
+          console.log("Getting links from ", searchHeader(header, "From"))
+          getLink(msg, searchHeader(header, "From"), searchHeader((header, "Date")));
         }
       });
     })
-    .catch(err => {
-      console.log(err);
-    });
+      .catch(err => {
+        console.log(err);
+      });
 };
 
+function searchHeader(header, key){
+  rst = "undefined"
+  for(var idx in header) {
+    console.log(header[idx])
+
+    if (header[idx].name == key) {
+      rst = header[idx].value
+      break
+    }
+  }
+    return rst
+}
+
 //finds an array of hyperlinks with the keywords hardcoded in the keyword array below.
-function getLink(msg){
+function getLink(msg, vendorName, date){
   let links = {};
   const keyword = ["unsubscribe", "subscription"];
 
@@ -111,9 +126,8 @@ function getLink(msg){
       links[item] = linksfromkw
     }
   });
-  const vendor = randomStr(6, "abcdefghijklmnopqrstuvwxyz1234567890");
   if(Object.keys(links).length > 0){
-    subscription[vendor] = links;
+    subscription[vendorName] = links;
   }
 }
 
@@ -145,17 +159,6 @@ function getLinkKeyword(msg, keyword){
   }
   return rst
 }
-
-//a random string generator, used in getlink keyword to create dummy vendor name
-function randomStr(len, arr) {
-  var ans = '';
-  for (var i = len; i > 0; i--) {
-    ans +=
-        arr[Math.floor(Math.random() * arr.length)];
-  }
-  return ans;
-}
-
 
 /**
  * Return an array of email content
