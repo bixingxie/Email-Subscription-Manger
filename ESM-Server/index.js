@@ -92,7 +92,7 @@ const getEmailContent = (auth, emailID) => {
         if (part.body.data != null) {
           const header = response.data.payload.headers
           const msg = Buffer.from(part.body.data, "base64").toString();
-          console.log("Getting links from ", searchHeader(header, "From"))
+          // console.log("Getting links from ", searchHeader(header, "From"))
           getLink(msg, searchHeader(header, "From"), searchHeader((header, "Date")));
         }
       });
@@ -105,8 +105,7 @@ const getEmailContent = (auth, emailID) => {
 function searchHeader(header, key){
   rst = "undefined"
   for(var idx in header) {
-    console.log(header[idx])
-
+    // console.log(header[idx])
     if (header[idx].name == key) {
       rst = header[idx].value
       break
@@ -134,6 +133,36 @@ function getLink(msg, vendorName, date){
 //finds an array of hyperlinks with the given keyword
 function getLinkKeyword(msg, keyword){
   let rst = [];
+
+  while(msg.search("<a href=")){
+    const start = msg.search("<a href=");
+    if(start == -1){
+      break;
+    }
+    const endstart = msg.slice(start).search("</ *a *>");
+    let end;
+    // console.log(start, " |||| ", endstart)
+    if(endstart > 0){
+      // console.log("Link Found")
+      end = msg.slice(start + endstart).search(">");
+      end = start + endstart + end + 1;
+      const link = msg.slice(start, end);
+      // console.log(link)
+      if(link.search(keyword) > 0){
+        console.log("effective link: ", link)
+        idx1 = link.search("\"")
+        idx2 = link.slice(idx1 + 1,).search("\"")
+        console.log(idx1, " ", idx2)
+        rst.push([keyword, link.slice(idx1 + 1, idx1 + idx2 + 1)])
+      }
+      msg = msg.slice(end,)
+    }
+    else{
+      msg = msg.slice(start+1,)
+    }
+  }
+  return rst
+
   while (msg.search(keyword)){
     var idx = msg.search(keyword);
     const endstart = msg.slice(idx).search("</ *a *>");
