@@ -23,7 +23,7 @@ class SubscriptionManager extends React.Component {
   }
 
   componentDidMount() {
-    fetch("http://localhost:4000/subscriptionManagement/", {
+    fetch("http://localhost:4000/manage_subscription/", {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json"

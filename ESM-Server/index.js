@@ -25,7 +25,7 @@ app.use(bodyParser.urlencoded({ extended: false })); // support encoded bodies
 app.use("/", router);
 
 /**
- * Get number of emails under a particular label
+ * Get number of emails under a particular label.
  * @param {OAuth2Client} auth    Authorization object.
  * @param {string}       labelID Number of emails to get.
  */
@@ -80,20 +80,23 @@ const getEmailContent = (auth, emailID) => {
     .then(response => {
       const parts = response.data.payload.parts;
 
-      // Filters non-text/plain stuff
-      parts.filter(function(part) {
+      parts.filter(part => {
         return part.mimeType == "text/plain";
       });
 
       parts.forEach(part => {
         if (part.body.data != null) {
-          const header = response.data.payload.headers;
-          const msg = Buffer.from(part.body.data, "base64").toString();
-          // console.log("Getting links from ", searchHeader(header, "From"))
-          getLink(
-            msg,
-            searchHeader(header, "From"),
-            searchHeader((header, "Date"))
+          const headers = response.data.payload.headers;
+          const message = Buffer.from(part.body.data, "base64").toString();
+          const sender = searchHeaders(headers, "From")
+          const emailDate = searchHeaders(headers, "Date") // date the email is sent
+          const keywordList = ["unsubscribe", "subscription"]
+
+          getUnsubscriptionLink(
+            message,
+            keywordList,
+            sender,
+            emailDate
           );
         }
       });
@@ -103,36 +106,45 @@ const getEmailContent = (auth, emailID) => {
     });
 };
 
-function searchHeader(header, key) {
-  rst = "undefined";
-  for (var idx in header) {
-    // console.log(header[idx])
-    if (header[idx].name == key) {
-      rst = header[idx].value;
-      break;
-    }
-  }
-  return rst;
+/**
+ * Searches a specific header given a header name.
+ * @param   {Array}   headers    Headers of a particular message.
+ * @param   {string}  headerName Name of the header to search for.
+ *
+ * @returns {string} Returns the value of the header if found, undefined otherwise.
+ */
+function searchHeaders(headers, headerName) {
+  const res = headers.find(elem => {
+    return elem.name == headerName;
+  });
+  return res ? res.value : undefined;
 }
 
-//finds an array of hyperlinks with the keywords hardcoded in the keyword array below.
-function getLink(msg, vendorName, date) {
+/**
+ * Finds an array of hyperlinks that match the keyword.
+ * @param   {string} message     The email.
+ * @param   {Array}  keywordList A list of keyword to search for. 
+ * @param   {string} sender      Sender of the email.
+ * @param   {string} date        Date when the email is sent.
+ *
+ * @returns {string} Returns the value of the header if found, undefined otherwise.
+ */
+function getUnsubscriptionLink(message, keywordList, sender, date) {
   let links = {};
-  const keyword = ["unsubscribe", "subscription"];
 
-  keyword.forEach(function(item) {
-    const linksfromkw = getLinkKeyword(msg, item);
+  keywordList.forEach(function(item) {
+    const linksfromkw = searchLinkByKeyword(message, item);
     if (linksfromkw.length > 0) {
       links[item] = linksfromkw;
     }
   });
   if (Object.keys(links).length > 0) {
-    subscription[vendorName] = links;
+    subscription[sender] = links;
   }
 }
 
 //finds an array of hyperlinks with the given keyword
-function getLinkKeyword(msg, keyword) {
+function searchLinkByKeyword(msg, keyword) {
   let rst = [];
 
   while (msg.search("<a href=")) {
@@ -160,30 +172,6 @@ function getLinkKeyword(msg, keyword) {
     } else {
       msg = msg.slice(start + 1);
     }
-  }
-  return rst;
-
-  while (msg.search(keyword)) {
-    var idx = msg.search(keyword);
-    const endstart = msg.slice(idx).search("</ *a *>");
-    var end;
-    var start;
-    if (endstart == -1) {
-      break;
-    } else {
-      end = msg.slice(idx + endstart).search(">");
-      if (end == -1 || end > 50) {
-        break;
-      }
-      end = idx + endstart + end + 1;
-      start = msg.lastIndexOf("<a", idx);
-    }
-    const range = msg.slice(start, end);
-    const link = anchorme(range);
-    if (link.length > 0) {
-      rst.push([keyword, link]);
-    }
-    msg = msg.slice(idx);
   }
   return rst;
 }
@@ -229,17 +217,17 @@ router.post("/get_token", (req, res) => {
   res.send({ status: "SUCCUSS" });
 });
 
-router.get("/subscriptionManagement/", (req, res) => {
+router.get("/manage_subscription/", (req, res) => {
   try {
     if (Object.keys(subscription).length > 1) {
       msg = JSON.stringify(subscription);
       res.status(200).send(msg);
     } else {
-      res.status(200).send("Fetching your subscription, please reload later");
+      res.status(200).send("Fetching subscriptions.");
     }
   } catch (err) {
     res.status(400).json({
-      message: "Error occured when collecting subscription",
+      message: "Error fetching subscriptions.",
       err
     });
     res.send();
