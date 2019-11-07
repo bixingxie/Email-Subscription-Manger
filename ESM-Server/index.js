@@ -14,18 +14,15 @@ const CLIENT_SECRET = "ofE8qOpv4zKTJbWN9fwqJqXh";
 const CLIENT_ID =
   "602826117073-lt0upfo5khvk59dqf0u50ruor73rrg6n.apps.googleusercontent.com";
 
-
-
 // locally cached record of subscription. in the format of:
 // {vendorName : {typeofLink(subscription/unsubscribe) : [links]}}
 // therefore, accessing a link is subscription[vendorName]["subscription"][idx]
-let subscription ={};
+let subscription = {};
 
 app.use(cors());
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: false })); // support encoded bodies
 app.use("/", router);
-
 
 /**
  * Get number of emails under a particular label
@@ -90,103 +87,105 @@ const getEmailContent = (auth, emailID) => {
 
       parts.forEach(part => {
         if (part.body.data != null) {
-          const header = response.data.payload.headers
+          const header = response.data.payload.headers;
           const msg = Buffer.from(part.body.data, "base64").toString();
           // console.log("Getting links from ", searchHeader(header, "From"))
-          getLink(msg, searchHeader(header, "From"), searchHeader((header, "Date")));
+          getLink(
+            msg,
+            searchHeader(header, "From"),
+            searchHeader((header, "Date"))
+          );
         }
       });
     })
-      .catch(err => {
-        console.log(err);
-      });
+    .catch(err => {
+      console.log(err);
+    });
 };
 
-function searchHeader(header, key){
-  rst = "undefined"
-  for(var idx in header) {
+function searchHeader(header, key) {
+  rst = "undefined";
+  for (var idx in header) {
     // console.log(header[idx])
     if (header[idx].name == key) {
-      rst = header[idx].value
-      break
+      rst = header[idx].value;
+      break;
     }
   }
-    return rst
+  return rst;
 }
 
 //finds an array of hyperlinks with the keywords hardcoded in the keyword array below.
-function getLink(msg, vendorName, date){
+function getLink(msg, vendorName, date) {
   let links = {};
   const keyword = ["unsubscribe", "subscription"];
 
-  keyword.forEach(function(item){
-    const linksfromkw = getLinkKeyword(msg, item)
-    if(linksfromkw.length > 0){
-      links[item] = linksfromkw
+  keyword.forEach(function(item) {
+    const linksfromkw = getLinkKeyword(msg, item);
+    if (linksfromkw.length > 0) {
+      links[item] = linksfromkw;
     }
   });
-  if(Object.keys(links).length > 0){
+  if (Object.keys(links).length > 0) {
     subscription[vendorName] = links;
   }
 }
 
 //finds an array of hyperlinks with the given keyword
-function getLinkKeyword(msg, keyword){
+function getLinkKeyword(msg, keyword) {
   let rst = [];
 
-  while(msg.search("<a href=")){
+  while (msg.search("<a href=")) {
     const start = msg.search("<a href=");
-    if(start == -1){
+    if (start == -1) {
       break;
     }
     const endstart = msg.slice(start).search("</ *a *>");
     let end;
     // console.log(start, " |||| ", endstart)
-    if(endstart > 0){
+    if (endstart > 0) {
       // console.log("Link Found")
       end = msg.slice(start + endstart).search(">");
       end = start + endstart + end + 1;
       const link = msg.slice(start, end);
       // console.log(link)
-      if(link.search(keyword) > 0){
-        console.log("effective link: ", link)
-        idx1 = link.search("\"")
-        idx2 = link.slice(idx1 + 1,).search("\"")
-        console.log(idx1, " ", idx2)
-        rst.push([keyword, link.slice(idx1 + 1, idx1 + idx2 + 1)])
+      if (link.search(keyword) > 0) {
+        console.log("effective link: ", link);
+        idx1 = link.search('"');
+        idx2 = link.slice(idx1 + 1).search('"');
+        console.log(idx1, " ", idx2);
+        rst.push([keyword, link.slice(idx1 + 1, idx1 + idx2 + 1)]);
       }
-      msg = msg.slice(end,)
-    }
-    else{
-      msg = msg.slice(start+1,)
+      msg = msg.slice(end);
+    } else {
+      msg = msg.slice(start + 1);
     }
   }
-  return rst
+  return rst;
 
-  while (msg.search(keyword)){
+  while (msg.search(keyword)) {
     var idx = msg.search(keyword);
     const endstart = msg.slice(idx).search("</ *a *>");
     var end;
     var start;
-    if(endstart == -1){
-      break
-    }
-    else{
+    if (endstart == -1) {
+      break;
+    } else {
       end = msg.slice(idx + endstart).search(">");
-      if(end == -1 || end > 50){
-        break
+      if (end == -1 || end > 50) {
+        break;
       }
       end = idx + endstart + end + 1;
       start = msg.lastIndexOf("<a", idx);
-    };
+    }
     const range = msg.slice(start, end);
     const link = anchorme(range);
-    if(link.length > 0){
-      rst.push([keyword, link])
+    if (link.length > 0) {
+      rst.push([keyword, link]);
     }
-    msg = msg.slice(idx,)
+    msg = msg.slice(idx);
   }
-  return rst
+  return rst;
 }
 
 /**
@@ -230,23 +229,22 @@ router.post("/get_token", (req, res) => {
   res.send({ status: "SUCCUSS" });
 });
 
-router.get("/subscriptionManagement/", (req, res) =>{
-  try{
-    if (Object.keys(subscription).length > 1){
-      msg = JSON.stringify(subscription)
+router.get("/subscriptionManagement/", (req, res) => {
+  try {
+    if (Object.keys(subscription).length > 1) {
+      msg = JSON.stringify(subscription);
       res.status(200).send(msg);
-    }else{
+    } else {
       res.status(200).send("Fetching your subscription, please reload later");
     }
-  }catch(err){
+  } catch (err) {
     res.status(400).json({
       message: "Error occured when collecting subscription",
       err
     });
-    res.send()
+    res.send();
   }
-})
-
+});
 
 app.listen(4000, () => {
   console.log("ESM Server listening on port 4000");
