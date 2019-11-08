@@ -3,6 +3,8 @@ import { SubscriptionTable } from "./SubscriptionTable";
 import { GoogleLogin } from "react-google-login";
 import { GoogleLogout } from "react-google-login";
 import { Card, CardBody, CardTitle, CardSubtitle } from "reactstrap";
+import localStorage from 'local-storage'
+
 
 // Given by Google API
 const CLIENT_ID =
@@ -10,12 +12,14 @@ const CLIENT_ID =
 
 export class HomePage extends React.Component {
   constructor() {
+    const userInfo = JSON.parse(localStorage.get('userInfo')) 
+
     super();
     this.state = {
-      isAuthenticated: false,
-      userEmail: null,
-      userName: null,
-      tokenObj: null,
+      isAuthenticated: userInfo ? true : false,
+      userEmail: (userInfo ? userInfo.userEmail : null), 
+      userName: (userInfo ? userInfo.userName : null), 
+      tokenObj: (userInfo ? userInfo.tokenObj : null),
       token: "",
       subscriptions: {}
     };
@@ -29,10 +33,15 @@ export class HomePage extends React.Component {
         token: response.tokenId,
         userEmail: response.profileObj.email,
         userName: response.profileObj.name,
-        tokenObj: JSON.stringify(response.tokenObj)
-      },
+        tokenObj: response.tokenId   
+      }, 
       () => {
         this.sendUserToken();
+        localStorage.set('userInfo', JSON.stringify({
+            tokenObj: this.state.tokenObj, 
+            userName: this.state.userName, 
+            userEmail: this.state.userEmail
+        }));
       }
     );
   };
@@ -51,7 +60,9 @@ export class HomePage extends React.Component {
 
   // Handles logout
   logout = () => {
-    this.setState({ isAuthenticated: false, token: "", user: null });
+    this.setState({ isAuthenticated: false, token: "", user: null }, ()=>{
+        localStorage.clear();
+    });
   };
 
   // Handles log in failure
