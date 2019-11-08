@@ -1,7 +1,21 @@
 import React from "react";
 import { GoogleLogin } from "react-google-login";
 import { GoogleLogout } from "react-google-login";
-import { Jumbotron, Button, Table } from "reactstrap";
+import {
+  Card,
+  CardText,
+  CardBody,
+  CardTitle,
+  CardSubtitle,
+  Button,
+  Table,
+  Nav,
+  NavItem,
+  NavLink,
+  Spinner
+} from "reactstrap";
+import { NavLink as RRNavLink } from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import "./App.css";
 
 // Given by Google API
@@ -10,16 +24,74 @@ const CLIENT_ID =
 
 class App extends React.Component {
   render() {
-    var login = <Login />;
+    return (
+      <Router>
+        <div>
+          <Nav tabs>
+            <NavItem>
+              <NavLink tag={RRNavLink} exact to="/" activeClassName="active">
+                Home
+              </NavLink>
+            </NavItem>
+            <NavItem>
+              <NavLink
+                tag={RRNavLink}
+                exact
+                to="/about"
+                activeClassName="active"
+              >
+                About
+              </NavLink>
+            </NavItem>
+            <NavItem>
+              <NavLink
+                tag={RRNavLink}
+                exact
+                to="/users"
+                activeClassName="active"
+              >
+                Users
+              </NavLink>
+            </NavItem>
+          </Nav>
 
-    return <div>{login}</div>;
+          <Switch>
+            <Route path="/about">
+              <About />
+            </Route>
+            <Route path="/users">
+              <Users />
+            </Route>
+            <Route path="/">
+              <Home />
+            </Route>
+          </Switch>
+        </div>
+      </Router>
+    );
   }
 }
+
+const Home = () => {
+  const login = <Login />;
+  return <div>{login}</div>;
+};
+
+const About = () => {
+  return <h2>About</h2>;
+};
+
+const Users = () => {
+  return <h2>Users</h2>;
+};
 
 class SubscriptionManager extends React.Component {
   constructor() {
     super();
-    this.state = { data: null };
+    this.state = {
+      data: null,
+      loaded: false
+    };
   }
 
   componentDidMount() {
@@ -30,33 +102,37 @@ class SubscriptionManager extends React.Component {
       }
     })
       .then(response => response.json())
-      .then(data => this.setState({ data: data }));
+      .then(data => this.setState({ data: data, loaded: true }));
   }
 
   render() {
     return (
-      <Table>
-        <thead>
-          <tr>
-            <th>Vendor Name</th>
-            <th>Unsubscribe Link</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            this.state.data ? Object.keys(this.state.data).map(
-              (key) => {
+      <div>
+        {this.state.loaded ? (
+          <Table dark>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Vendor Name</th>
+                <th>Link to Unsubscribe</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.keys(this.state.data).map((key, index) => {
                 return (
                   <tr>
+                    <th scope="row">{index}</th>
                     <td>{key}</td>
                     <td>{this.state.data[key]}</td>
                   </tr>
-                )
-              }
-            ) : null
-          }
-        </tbody>
-            </Table>
+                );
+              })}
+            </tbody>
+          </Table>
+        ) : (
+          <Spinner color="dark" />
+        )}
+      </div>
     );
   }
 }
@@ -65,7 +141,6 @@ class Login extends React.Component {
   constructor() {
     super();
     this.state = {
-      managerOpen: false,
       isAuthenticated: false,
       userEmail: null,
       userName: null,
@@ -113,10 +188,6 @@ class Login extends React.Component {
     alert(error);
   };
 
-  showSubscriptions = () => {
-    this.setState({ managerOpen: !this.state.managerOpen });
-  };
-
   render() {
     let logInOrOutButton;
 
@@ -143,31 +214,23 @@ class Login extends React.Component {
 
     return (
       <div>
-        <Jumbotron>
-          <div className="title">
-            <h1> Email Subscription Manager </h1>
-          </div>
-          <div className="login">
-            <div className="loginBox">
-                {" "}
-                Welcome,{" "}
-                {this.state.isAuthenticated
-                  ? this.state.userName
-                  : "Please log in"}{" "}
+        <Card>
+          <CardBody>
+            <CardTitle>Email Subscription Manager</CardTitle>
 
-            <div className="loginButton">
-              {logInOrOutButton}
-            </div>
-            </div>
-          </div>
-          <hr />
-          {this.state.isAuthenticated ? (
-            <Button color="primary" onClick={this.showSubscriptions}>
-              Manage Subscriptions
-            </Button>
-          ) : null}
-          {this.state.managerOpen ? <SubscriptionManager /> : null}
-        </Jumbotron>
+            <CardSubtitle>
+              {" "}
+              Welcome,{" "}
+              {this.state.isAuthenticated
+                ? this.state.userName
+                : "Please log in"}{" "}
+            </CardSubtitle>
+
+            {this.state.isAuthenticated ? <SubscriptionManager /> : <hr />}
+
+            {logInOrOutButton}
+          </CardBody>
+        </Card>
       </div>
     );
   }
