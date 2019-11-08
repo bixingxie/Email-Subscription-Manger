@@ -3,8 +3,7 @@ const { google } = require("googleapis");
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-
-var anchorme = require("anchorme").default; // if installed via NPM
+const cheerio = require("cheerio");
 
 const app = express();
 const router = express.Router();
@@ -17,7 +16,7 @@ const CLIENT_ID =
 // locally cached record of subscription. in the format of:
 // {vendorName : {typeofLink(subscription/unsubscribe) : [links]}}
 // therefore, accessing a link is subscription[vendorName]["subscription"][idx]
-let subscription = {};
+const subscription = {};
 
 app.use(cors());
 app.use(bodyParser.json()); // support json encoded bodies
@@ -37,7 +36,7 @@ const getNumberOfEmails = (auth, labelID) => {
       id: labelID
     })
     .then(response => {
-      console.log("Message total: ", response.data.messagesTotal);
+      // console.log("Message total: ", response.data.messagesTotal);
     })
     .catch(err => {
       console.log(err);
@@ -47,17 +46,15 @@ const getNumberOfEmails = (auth, labelID) => {
 /**
  * Gets a list of emails from the Gmail API.
  * @param {OAuth2Client} auth Authorization object.
- * @param {int} maxResults    Number of emails to get.
  * @param {function} callback Callback function to execute.
  */
-const getEmailList = (auth, maxResults, callback) => {
+const getEmailList = (auth, callback) => {
   const gmail = google.gmail({ version: "v1", auth });
   gmail.users.messages
     .list({
       userId: "me",
       includeSpamTrash: false,
-      maxResults: maxResults,
-      q: "subscription"
+      q: "unsubscribe OR subscription"
     })
     .then(response => {
       callback(auth, response.data.messages);
@@ -79,7 +76,9 @@ const getEmailContent = (auth, emailID) => {
     })
     .then(response => {
       const parts = response.data.payload.parts;
-
+      if (!parts) {
+        return;
+      }
       parts.filter(part => {
         return part.mimeType == "text/plain";
       });
@@ -87,17 +86,24 @@ const getEmailContent = (auth, emailID) => {
       parts.forEach(part => {
         if (part.body.data != null) {
           const headers = response.data.payload.headers;
+          const sender = searchHeaders(headers, "From");
+          const emailDate = searchHeaders(headers, "Date");
           const message = Buffer.from(part.body.data, "base64").toString();
-          const sender = searchHeaders(headers, "From")
-          const emailDate = searchHeaders(headers, "Date") // date the email is sent
-          const keywordList = ["unsubscribe", "subscription"]
 
-          getUnsubscriptionLink(
-            message,
-            keywordList,
-            sender,
-            emailDate
-          );
+          const $ = cheerio.load(message);
+          const links = $("a");
+          $(links).each((i, link) => {
+            const text = $(link)
+              .text()
+              .toLowerCase();
+            if (
+              text.indexOf("subscribe") !== -1 ||
+              text.indexOf("subscription") !== -1
+            ) {
+              subscription[sender] = $(link).attr("href");
+              return;
+            }
+          });
         }
       });
     })
@@ -123,19 +129,19 @@ function searchHeaders(headers, headerName) {
 /**
  * Finds an array of hyperlinks that match the keyword.
  * @param   {string} message     The email.
- * @param   {Array}  keywordList A list of keyword to search for. 
+ * @param   {Array}  keywordList A list of keyword to search for.
  * @param   {string} sender      Sender of the email.
  * @param   {string} date        Date when the email is sent.
  *
  * @returns {string} Returns the value of the header if found, undefined otherwise.
  */
 function getUnsubscriptionLink(message, keywordList, sender, date) {
-  let links = {};
+  const links = {};
 
-  keywordList.forEach(function(item) {
-    const linksfromkw = searchLinkByKeyword(message, item);
-    if (linksfromkw.length > 0) {
-      links[item] = linksfromkw;
+  keywordList.forEach(item => {
+    const keywordLink = searchLinkByKeyword(message, item);
+    if (keywordLink.length > 0) {
+      links[item] = keywordLink;
     }
   });
   if (Object.keys(links).length > 0) {
@@ -144,36 +150,33 @@ function getUnsubscriptionLink(message, keywordList, sender, date) {
 }
 
 //finds an array of hyperlinks with the given keyword
-function searchLinkByKeyword(msg, keyword) {
-  let rst = [];
+function searchLinkByKeyword(message, keyword) {
+  let result = [];
 
-  while (msg.search("<a href=")) {
-    const start = msg.search("<a href=");
+  while (message.search("<a href=")) {
+    const start = message.search("<a href=");
     if (start == -1) {
       break;
     }
-    const endstart = msg.slice(start).search("</ *a *>");
+    const endstart = message.slice(start).search("</ *a *>");
     let end;
-    // console.log(start, " |||| ", endstart)
     if (endstart > 0) {
-      // console.log("Link Found")
-      end = msg.slice(start + endstart).search(">");
+      end = message.slice(start + endstart).search(">");
       end = start + endstart + end + 1;
-      const link = msg.slice(start, end);
-      // console.log(link)
+      const link = message.slice(start, end);
       if (link.search(keyword) > 0) {
-        console.log("effective link: ", link);
+        // console.log("effective link: ", link);
         idx1 = link.search('"');
         idx2 = link.slice(idx1 + 1).search('"');
-        console.log(idx1, " ", idx2);
-        rst.push([keyword, link.slice(idx1 + 1, idx1 + idx2 + 1)]);
+        // console.log(idx1, " ", idx2);
+        result.push([keyword, link.slice(idx1 + 1, idx1 + idx2 + 1)]);
       }
-      msg = msg.slice(end);
+      message = message.slice(end);
     } else {
-      msg = msg.slice(start + 1);
+      message = message.slice(start + 1);
     }
   }
-  return rst;
+  return result;
 }
 
 /**
@@ -208,7 +211,7 @@ router.post("/get_token", (req, res) => {
   try {
     const tokenObj = req.body;
     const oAuth = initoAuthObj(tokenObj);
-    getEmailList(oAuth, 5, printEmailList);
+    getEmailList(oAuth, printEmailList);
     getNumberOfEmails(oAuth, "INBOX");
   } catch (e) {
     res.send({ status: "SUCCUSS" });
@@ -220,8 +223,8 @@ router.post("/get_token", (req, res) => {
 router.get("/manage_subscription/", (req, res) => {
   try {
     if (Object.keys(subscription).length > 1) {
-      msg = JSON.stringify(subscription);
-      res.status(200).send(msg);
+      console.log(subscription);
+      res.status(200).send(JSON.stringify(subscription));
     } else {
       res.status(200).send("Fetching subscriptions.");
     }

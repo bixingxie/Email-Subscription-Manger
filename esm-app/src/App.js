@@ -34,14 +34,6 @@ class SubscriptionManager extends React.Component {
   }
 
   render() {
-    const data = this.state.data
-    if (data !== null) {
-      Object.keys(data).forEach((item) => {
-        console.log(item)
-        console.log(data[item]['subscription'][0][1])
-      })
-    }
-
     return (
       <Table>
         <thead>
@@ -57,7 +49,7 @@ class SubscriptionManager extends React.Component {
                 return (
                   <tr>
                     <td>{key}</td>
-                    {data[key]['subscription'][0][1]}
+                    <td>{this.state.data[key]}</td>
                   </tr>
                 )
               }
