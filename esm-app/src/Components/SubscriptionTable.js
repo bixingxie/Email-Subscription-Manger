@@ -1,6 +1,6 @@
 import React from "react";
 import {MaterialUITable} from "./MaterialUITable"
-import { Spinner } from "reactstrap";
+import {MaterialUISpinner} from "./MaterialUISpinner"
 
 
 export class SubscriptionTable extends React.Component {
@@ -32,7 +32,9 @@ export class SubscriptionTable extends React.Component {
         <MaterialUITable data={this.state.data}/>
       );
     } else {
-      content = <Spinner color="dark" />;
+      content = (
+        <MaterialUISpinner/>
+      );
     }
 
     return <div>{content}</div>;
