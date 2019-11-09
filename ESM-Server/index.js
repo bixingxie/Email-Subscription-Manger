@@ -19,20 +19,20 @@ const CLIENT_ID =
 // therefore, accessing a link is subscription[vendorName]["subscription"][idx]
 const subscription = {};
 
-const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  port: '3306',
-  password: 'root',
-  database: 'EmailSubscriptionManager'
-})
+// const connection = mysql.createConnection({
+//   host: 'localhost',
+//   user: 'root',
+//   port: '3306',
+//   password: 'root',
+//   database: 'EmailSubscriptionManager'
+// })
 
-// Connects to the MySQL database
-connection.connect(err => {
-  if (err) {
-      return err;
-  }
-});
+// // Connects to the MySQL database
+// connection.connect(err => {
+//   if (err) {
+//       return err;
+//   }
+// });
 
 app.use(cors());
 app.use(bodyParser.json()); // support json encoded bodies
@@ -122,7 +122,7 @@ const getEmailContent = (auth, emailID) => {
               text.indexOf("subscription") !== -1
             ) {
               const linkFetched = $(link).attr("href");
-              passedToDB(current_user, emailDate, sender, linkFetched)
+              // passedToDB(current_user, emailDate, sender, linkFetched)
               subscription[sender] = linkFetched;
               return;
             }
@@ -202,35 +202,35 @@ function searchLinkByKeyword(message, keyword) {
   return result;
 }
 
-/**
- * pass the found link to database
- * @param {String} user
- * @param {String} timestamp 
- * @param {String} sender 
- * @param {String} link Link to be stored 
- */
-const passedToDB = (user, timestamp, sender, linkFetched) =>{
-  sender = sender.replace(/"/g, "").replace(" ", "")
-  const jsTimeStamp = Date.parse(timestamp)/1000;
+// /**
+//  * pass the found link to database
+//  * @param {String} user
+//  * @param {String} timestamp 
+//  * @param {String} sender 
+//  * @param {String} link Link to be stored 
+//  */
+// const passedToDB = (user, timestamp, sender, linkFetched) =>{
+//   sender = sender.replace(/"/g, "").replace(" ", "")
+//   const jsTimeStamp = Date.parse(timestamp)/1000;
 
-  const sql = `INSERT INTO links (user, vendor, link, unsubscribed, time) VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp} ))`;
-  connection.query(sql, (err, results) =>{
-    if (err) {
-      console.log(sender);
-      console.log(sql);
-      return console.log(err);
+//   const sql = `INSERT INTO links (user, vendor, link, unsubscribed, time) VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp} ))`;
+//   connection.query(sql, (err, results) =>{
+//     if (err) {
+//       console.log(sender);
+//       console.log(sql);
+//       return console.log(err);
       
-    } else {
-      return console.log("successfully added link");
-    }
-  });
-}
+//     } else {
+//       return console.log("successfully added link");
+//     }
+//   });
+// }
 
-/**
- * Prepare a sql query string
- * @param {} keys 
- * @param {*} emailList 
- */
+// /**
+//  * Prepare a sql query string
+//  * @param {} keys 
+//  * @param {*} emailList 
+//  */
 
 
 /**
@@ -271,7 +271,7 @@ router.post("/get_token", (req, res) => {
     getEmailList(oAuth, printEmailList);
     getNumberOfEmails(oAuth, "INBOX");
   } catch (e) {
-    res.send({ status: "SUCCUSS" });
+    res.send({ status: "ERROR" });
     console.log(e);
   }
   res.send({ status: "SUCCUSS" });
@@ -279,12 +279,7 @@ router.post("/get_token", (req, res) => {
 
 router.get("/manage_subscription/", (req, res) => {
   try {
-    if (Object.keys(subscription).length > 1) {
-      console.log(subscription);
-      res.status(200).send(JSON.stringify(subscription));
-    } else {
-      res.status(200).send("Fetching subscriptions.");
-    }
+    res.status(200).send(JSON.stringify(subscription));
   } catch (err) {
     res.status(400).json({
       message: "Error fetching subscriptions.",

@@ -3,10 +3,8 @@ import { SubscriptionTable } from "./SubscriptionTable";
 import { GoogleLogin } from "react-google-login";
 import { GoogleLogout } from "react-google-login";
 import localStorage from "local-storage";
-import Typography from "@material-ui/core/Typography";
 import Paper from "@material-ui/core/Paper";
 import Card from "@material-ui/core/Card";
-import CardContent from "@material-ui/core/CardContent";
 import HomePageCard from "./HomePageCard";
 
 // Given by Google API
@@ -35,9 +33,10 @@ export class HomePage extends React.Component {
         token: response.tokenId,
         userEmail: response.profileObj.email,
         userName: response.profileObj.name,
-        tokenObj: response.tokenId
+        tokenObj: response.tokenObj
       },
       () => {
+        console.log(this.state.tokenObj)
         this.sendUserToken();
         localStorage.set(
           "userInfo",
@@ -53,13 +52,14 @@ export class HomePage extends React.Component {
 
   // Send user token to backend
   sendUserToken = () => {
+    console.log(this.state.tokenObj)
     fetch("http://localhost:4000/get_token/", {
       method: "POST",
       headers: {
-        Accept: "application/json",
+        // Accept: "application/json",
         "Content-Type": "application/json"
       },
-      body: this.state.tokenObj
+      body: JSON.stringify(this.state.tokenObj),
     });
   };
 
