@@ -1,5 +1,7 @@
 import React from "react";
-import { Table, Spinner } from "reactstrap";
+import {MaterialUITable} from "./MaterialUITable"
+import { Spinner } from "reactstrap";
+
 
 export class SubscriptionTable extends React.Component {
   constructor() {
@@ -22,33 +24,17 @@ export class SubscriptionTable extends React.Component {
   }
 
   render() {
-    return (
-      <div>
-        {this.state.loaded ? (
-          <Table dark>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Vendor Name</th>
-                <th>Link to Unsubscribe</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Object.keys(this.state.data).map((key, index) => {
-                return (
-                  <tr>
-                    <th scope="row">{index}</th>
-                    <td>{key}</td>
-                    <td>{this.state.data[key]}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </Table>
-        ) : (
-          <Spinner color="dark" />
-        )}
-      </div>
-    );
+    const isLoaded = this.state.loaded;
+    let content;
+
+    if (isLoaded) {
+      content = (
+        <MaterialUITable data={this.state.data}/>
+      );
+    } else {
+      content = <Spinner color="dark" />;
+    }
+
+    return <div>{content}</div>;
   }
 }
