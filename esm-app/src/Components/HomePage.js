@@ -2,9 +2,12 @@ import React from "react";
 import { SubscriptionTable } from "./SubscriptionTable";
 import { GoogleLogin } from "react-google-login";
 import { GoogleLogout } from "react-google-login";
-import { Card, CardBody, CardTitle, CardSubtitle } from "reactstrap";
-import localStorage from 'local-storage'
-
+import localStorage from "local-storage";
+import Typography from "@material-ui/core/Typography";
+import Paper from "@material-ui/core/Paper";
+import Card from "@material-ui/core/Card";
+import CardContent from "@material-ui/core/CardContent";
+import HomePageCard from "./HomePageCard";
 
 // Given by Google API
 const CLIENT_ID =
@@ -12,36 +15,38 @@ const CLIENT_ID =
 
 export class HomePage extends React.Component {
   constructor() {
-    const userInfo = JSON.parse(localStorage.get('userInfo')) 
+    const userInfo = JSON.parse(localStorage.get("userInfo"));
 
     super();
     this.state = {
       isAuthenticated: userInfo ? true : false,
-      userEmail: (userInfo ? userInfo.userEmail : null), 
-      userName: (userInfo ? userInfo.userName : null), 
-      tokenObj: (userInfo ? userInfo.tokenObj : null),
+      userEmail: userInfo ? userInfo.userEmail : null,
+      userName: userInfo ? userInfo.userName : null,
+      tokenObj: userInfo ? userInfo.tokenObj : null,
       token: "",
       subscriptions: {}
     };
   }
 
-  // Handles login
-  login = response => {
+  handleLoginSuccess = response => {
     this.setState(
       {
         isAuthenticated: true,
         token: response.tokenId,
         userEmail: response.profileObj.email,
         userName: response.profileObj.name,
-        tokenObj: response.tokenId   
-      }, 
+        tokenObj: response.tokenId
+      },
       () => {
         this.sendUserToken();
-        localStorage.set('userInfo', JSON.stringify({
-            tokenObj: this.state.tokenObj, 
-            userName: this.state.userName, 
+        localStorage.set(
+          "userInfo",
+          JSON.stringify({
+            tokenObj: this.state.tokenObj,
+            userName: this.state.userName,
             userEmail: this.state.userEmail
-        }));
+          })
+        );
       }
     );
   };
@@ -60,13 +65,12 @@ export class HomePage extends React.Component {
 
   // Handles logout
   logout = () => {
-    this.setState({ isAuthenticated: false, token: "", user: null }, ()=>{
-        localStorage.clear();
+    this.setState({ isAuthenticated: false, token: "", user: null }, () => {
+      localStorage.clear();
     });
   };
 
-  // Handles log in failure
-  onFailure = error => {
+  handleLoginFailure = error => {
     alert(error);
   };
 
@@ -87,33 +91,25 @@ export class HomePage extends React.Component {
           clientId={CLIENT_ID}
           scope="https://mail.google.com/"
           buttonText="Login with Google"
-          onSuccess={this.login}
-          onFailure={this.onFailure}
+          onSuccess={this.handleLoginSuccess}
+          onFailure={this.handleLoginFailure}
           cookiePolicy={"single_host_origin"}
         />
       );
     }
 
     return (
-      <div>
+      <Paper>
+        <HomePageCard
+          userName={this.state.userName ? this.state.userName : "please log in"}
+        />
+
         <Card>
-          <CardBody>
-            <CardTitle>Email Subscription Manager</CardTitle>
-
-            <CardSubtitle>
-              {" "}
-              Welcome,{" "}
-              {this.state.isAuthenticated
-                ? this.state.userName
-                : "Please log in"}{" "}
-            </CardSubtitle>
-
-            {this.state.isAuthenticated ? <SubscriptionTable /> : <hr />}
-
-            {logInOrOutButton}
-          </CardBody>
+          {this.state.isAuthenticated ? <SubscriptionTable /> : <hr />}
         </Card>
-      </div>
+
+        <Card>{logInOrOutButton}</Card>
+      </Paper>
     );
   }
 }

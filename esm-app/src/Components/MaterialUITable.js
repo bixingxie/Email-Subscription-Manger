@@ -1,5 +1,5 @@
 import React from 'react';
-import { makeStyles, createMuiTheme, ThemeProvider} from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -17,18 +17,11 @@ const useStyles = makeStyles({
     }
 });
   
-const theme = createMuiTheme({
-    palette: {
-        type: 'dark',
-    },
-});
-
 export function MaterialUITable(props) {
   const classes = useStyles();
 
   return (
-    <ThemeProvider theme={theme}>
-        <Paper className={classes.root}>
+    <Paper className={classes.root}>
         <Table className={classes.table} aria-label="simple table">
             <TableHead>
             <TableRow>
@@ -49,8 +42,7 @@ export function MaterialUITable(props) {
             ))}
             </TableBody>
         </Table>
-        </Paper>
-    </ThemeProvider>
+    </Paper>
   );
 }
 
