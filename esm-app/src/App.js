@@ -1,176 +1,91 @@
-import React from "react";
-import { GoogleLogin } from "react-google-login";
-import { GoogleLogout } from "react-google-login";
-import { Jumbotron, Button, Table } from "reactstrap";
+import React from 'react';
+import PropTypes from 'prop-types';
+import { makeStyles, createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
+import AppBar from '@material-ui/core/AppBar';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
+import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
+import { HomePage } from './Components/HomePage';
+import AboutPage from './Components/AboutPage';
+
+import CssBaseline from '@material-ui/core/CssBaseline';
 import "./App.css";
 
-// Given by Google API
-const CLIENT_ID =
-  "602826117073-lt0upfo5khvk59dqf0u50ruor73rrg6n.apps.googleusercontent.com";
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
 
-class App extends React.Component {
-  render() {
-    var login = <Login />;
-
-    return <div>{login}</div>;
-  }
+  return (
+    <Typography
+      component="div"
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      <Box p={3}>{children}</Box>
+    </Typography>
+  );
 }
 
-class SubscriptionManager extends React.Component {
-  constructor() {
-    super();
-    this.state = { data: null };
-  }
+TabPanel.propTypes = {
+  children: PropTypes.node,
+  index: PropTypes.any.isRequired,
+  value: PropTypes.any.isRequired,
+};
 
-  componentDidMount() {
-    fetch("http://localhost:4000/manage_subscription/", {
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json"
-      }
-    })
-      .then(response => response.json())
-      .then(data => this.setState({ data: data }));
-  }
-
-  render() {
-    return (
-      <Table>
-        <thead>
-          <tr>
-            <th>Vendor Name</th>
-            <th>Unsubscribe Link</th>
-          </tr>
-        </thead>
-        <tbody>
-          {
-            this.state.data ? Object.keys(this.state.data).map(
-              (key) => {
-                return (
-                  <tr>
-                    <td>{key}</td>
-                    <td>{this.state.data[key]}</td>
-                  </tr>
-                )
-              }
-            ) : null
-          }
-        </tbody>
-            </Table>
-    );
-  }
+function a11yProps(index) {
+  return {
+    id: `simple-tab-${index}`,
+    'aria-controls': `simple-tabpanel-${index}`,
+  };
 }
 
-class Login extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      managerOpen: false,
-      isAuthenticated: false,
-      userEmail: null,
-      userName: null,
-      tokenObj: null,
-      token: "",
-      subscriptions: {}
-    };
-  }
+const useStyles = makeStyles(theme => ({
+  root: {
+    flexGrow: 1,
+  },
+}));
 
-  // Handles login
-  login = response => {
-    this.setState(
-      {
-        isAuthenticated: true,
-        token: response.tokenId,
-        userEmail: response.profileObj.email,
-        userName: response.profileObj.name,
-        tokenObj: JSON.stringify(response.tokenObj)
-      },
-      () => {
-        this.sendUserToken();
-      }
-    );
+const theme = createMuiTheme({
+    palette: {
+        type: 'dark',
+    },
+});
+
+export default function App() {
+  const classes = useStyles();
+  const [value, setValue] = React.useState(0);
+
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
   };
 
-  // Send user token to backend
-  sendUserToken = () => {
-    fetch("http://localhost:4000/get_token/", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json"
-      },
-      body: this.state.tokenObj
-    });
-  };
-
-  // Handles logout
-  logout = () => {
-    this.setState({ isAuthenticated: false, token: "", user: null });
-  };
-
-  // Handles log in failure
-  onFailure = error => {
-    alert(error);
-  };
-
-  showSubscriptions = () => {
-    this.setState({ managerOpen: !this.state.managerOpen });
-  };
-
-  render() {
-    let logInOrOutButton;
-
-    if (this.state.isAuthenticated) {
-      logInOrOutButton = (
-        <GoogleLogout
-          clientId={CLIENT_ID}
-          buttonText="Logout"
-          onLogoutSuccess={this.logout}
-        />
-      );
-    } else {
-      logInOrOutButton = (
-        <GoogleLogin
-          clientId={CLIENT_ID}
-          scope="https://mail.google.com/"
-          buttonText="Login with Google"
-          onSuccess={this.login}
-          onFailure={this.onFailure}
-          cookiePolicy={"single_host_origin"}
-        />
-      );
-    }
-
-    return (
-      <div>
-        <Jumbotron>
-          <div className="title">
-            <h1> Email Subscription Manager </h1>
-          </div>
-          <div className="login">
-            <div className="loginBox">
-                {" "}
-                Welcome,{" "}
-                {this.state.isAuthenticated
-                  ? this.state.userName
-                  : "Please log in"}{" "}
-
-            <div className="loginButton">
-              {logInOrOutButton}
+  return (
+    <React.Fragment>
+        <ThemeProvider theme={theme}>
+        <CssBaseline />
+            <div className={classes.root}>
+                    <AppBar position="static">
+                        <Tabs value={value} onChange={handleChange} aria-label="simple tabs example">
+                        <Tab label="Home" {...a11yProps(0)} />
+                        <Tab label="About" {...a11yProps(1)} />
+                        <Tab label="Privacy" {...a11yProps(2)} />
+                        </Tabs>
+                    </AppBar>
+                    <TabPanel value={value} index={0}>
+                        <HomePage/>
+                    </TabPanel>
+                    <TabPanel value={value} index={1}>
+                        <AboutPage/>
+                    </TabPanel>
+                    <TabPanel value={value} index={2}>
+                        Privacy
+                    </TabPanel>
             </div>
-            </div>
-          </div>
-          <hr />
-          {this.state.isAuthenticated ? (
-            <Button color="primary" onClick={this.showSubscriptions}>
-              Manage Subscriptions
-            </Button>
-          ) : null}
-          {this.state.managerOpen ? <SubscriptionManager /> : null}
-        </Jumbotron>
-      </div>
-    );
-  }
+        </ThemeProvider>
+    </React.Fragment>
+  );
 }
 
-export default App;
