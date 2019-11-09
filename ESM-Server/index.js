@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cheerio = require("cheerio");
+const mysql = require('mysql')
 
 const app = express();
 const router = express.Router();
@@ -18,10 +19,30 @@ const CLIENT_ID =
 // therefore, accessing a link is subscription[vendorName]["subscription"][idx]
 const subscription = {};
 
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  port: '3306',
+  password: 'root',
+  database: 'EmailSubscriptionManager'
+})
+
+// Connects to the MySQL database
+connection.connect(err => {
+  if (err) {
+      return err;
+  }
+});
+
 app.use(cors());
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: false })); // support encoded bodies
 app.use("/", router);
+
+//list of cached values for development before they are moved to database
+let current_user;
+
+
 
 /**
  * Get number of emails under a particular label.
@@ -100,7 +121,9 @@ const getEmailContent = (auth, emailID) => {
               text.indexOf("subscribe") !== -1 ||
               text.indexOf("subscription") !== -1
             ) {
-              subscription[sender] = $(link).attr("href");
+              const linkFetched = $(link).attr("href");
+              passedToDB(current_user, emailDate, sender, linkFetched)
+              subscription[sender] = linkFetched;
               return;
             }
           });
@@ -180,6 +203,37 @@ function searchLinkByKeyword(message, keyword) {
 }
 
 /**
+ * pass the found link to database
+ * @param {String} user
+ * @param {String} timestamp 
+ * @param {String} sender 
+ * @param {String} link Link to be stored 
+ */
+const passedToDB = (user, timestamp, sender, linkFetched) =>{
+  sender = sender.replace(/"/g, "").replace(" ", "")
+  const jsTimeStamp = Date.parse(timestamp)/1000;
+
+  const sql = `INSERT INTO links (user, vendor, link, unsubscribed, time) VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp} ))`;
+  connection.query(sql, (err, results) =>{
+    if (err) {
+      console.log(sender);
+      console.log(sql);
+      return console.log(err);
+      
+    } else {
+      return console.log("successfully added link");
+    }
+  });
+}
+
+/**
+ * Prepare a sql query string
+ * @param {} keys 
+ * @param {*} emailList 
+ */
+
+
+/**
  * Return an array of email content
  * @param {OAuth2Client} auth      Authorization object.
  * @param {Array}        emailList A list of email to print.
@@ -200,6 +254,9 @@ const initoAuthObj = tokenObj => {
     REDIRECT_URLS[0]
   );
   oAuth.setCredentials(tokenObj);
+
+  current_user = 'md3837'
+  
   return oAuth;
 };
 
