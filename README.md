@@ -55,6 +55,9 @@ ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. E
 
 See `esm.sql` for a copy of databse schema. **Recommended**: running phpMyAdmin at `localhost:8889`
 
+use the following mysql query to create appropriate table
+CREATE TABLE all_links (user varchar(200), vendor varchar(200), link text, unsubcribed tinyint(1), time timestamp, PRIMARY KEY(user, vendor)) 
+
 
 
 ## Credits 

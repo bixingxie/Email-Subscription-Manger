@@ -19,7 +19,23 @@ const CLIENT_ID =
 // locally cached record of subscription. in the format of:
 // {vendorName : {typeofLink(subscription/unsubscribe) : [links]}}
 // therefore, accessing a link is subscription[vendorName]["subscription"][idx]
-let subscription ={};
+const subscription = {};
+let userEmail;
+
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  port: '3306',
+  password: 'root',
+  database: 'EmailSubscriptionManager'
+})
+
+// Connects to the MySQL database
+connection.connect(err => {
+  if (err) {
+      return err;
+  }
+});
 
 app.use(cors());
 app.use(bodyParser.json()); // support json encoded bodies
@@ -90,8 +106,27 @@ const getEmailContent = (auth, emailID) => {
 
       parts.forEach(part => {
         if (part.body.data != null) {
-          const msg = Buffer.from(part.body.data, "base64").toString();
-          getLink(msg);
+          const headers = response.data.payload.headers;
+          const sender = searchHeaders(headers, "From");
+          const emailDate = searchHeaders(headers, "Date");
+          const message = Buffer.from(part.body.data, "base64").toString();
+
+          const $ = cheerio.load(message);
+          const links = $("a");
+          $(links).each((i, link) => {
+            const text = $(link)
+              .text()
+              .toLowerCase();
+            if (
+              text.indexOf("subscribe") !== -1 ||
+              text.indexOf("subscription") !== -1
+            ) {
+              const linkFetched = $(link).attr("href");
+              passedToDB(userEmail, emailDate, sender, linkFetched)
+              subscription[sender] = linkFetched;
+              return;
+            }
+          });
         }
       });
     })
@@ -146,16 +181,60 @@ function getLinkKeyword(msg, keyword){
   return rst
 }
 
-//a random string generator, used in getlink keyword to create dummy vendor name
-function randomStr(len, arr) {
-  var ans = '';
-  for (var i = len; i > 0; i--) {
-    ans +=
-        arr[Math.floor(Math.random() * arr.length)];
-  }
-  return ans;
-}
+/**
+ * pass the found link to database
+ * @param {String} user
+ * @param {String} timestamp 
+ * @param {String} sender 
+ * @param {String} link Link to be stored 
+ */
+const passedToDB = (user, timestamp, sender, linkFetched) =>{
+  sender = sender.replace(/"/g, "").replace(" ", "")
+  const jsTimeStamp = Date.parse(timestamp)/1000;
 
+  const sql1 = `SELECT * FROM all_links WHERE user="${user}" AND vendor="${sender}"`;
+  // console.log(sql1)
+  connection.query(sql1, (err, rst) =>{
+    if (err) {
+      console.log(sql);
+      console.error(err);
+    } else {
+      var valid;
+      var update;
+
+      //check current status of record
+      if(rst.length == 0){
+        valid = true;
+      }else{
+        // console.log(rst[0].time)
+        if(timestamp > rst[0].time){
+          valid = true;
+          update = true;
+        }else valid = false;
+      }
+
+      //update database
+      if(valid){
+        // console.log(valid);
+        // console.log("about to run query\n");
+        let sql;
+        if(update){
+          sql = `UPDATE all_links SET link = "${linkFetched}", unsubscribed = 0, time = FROM_UNIXTIME(${jsTimeStamp}) WHERE user="${user}" AND vendor="${sender}`;
+        }else{
+          sql = `INSERT INTO all_links (user, vendor, link, unsubscribed, time) VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp} ))`;
+        }
+        connection.query(sql, (err, results) =>{
+          if (err) {
+            return console.log(err);
+          } else {
+            return console.log("successfully added link");
+          }
+        });
+      }
+    }
+  });
+
+}
 
 /**
  * Return an array of email content
@@ -187,7 +266,8 @@ router.get("/", (req, res) => {
 
 router.post("/get_token", (req, res) => {
   try {
-    const tokenObj = req.body;
+    const tokenObj = req.body[0];
+    userEmail = req.body[1];
     const oAuth = initoAuthObj(tokenObj);
     getEmailList(oAuth, 5, printEmailList);
     getNumberOfEmails(oAuth, "INBOX");
@@ -198,15 +278,19 @@ router.post("/get_token", (req, res) => {
   res.send({ status: "SUCCUSS" });
 });
 
-router.get("/subscriptionManagement/", (req, res) =>{
-  try{
-    if (Object.keys(subscription).length > 1){
-      msg = JSON.stringify(subscription)
-      res.status(200).send(msg);
-    }else{
-      res.status(200).send("Fetching your subscription, please reload later");
-    }
-  }catch(err){
+router.get("/manage_subscription/", (req, res) => {
+  try {
+    const sql = `Select * from all_links where user="${user}"`
+    
+    connection.query(sql, (err, results) =>{
+      if (err) {
+        return console.log(err);
+      } else {
+        res.status(200).send(JSON.stringify(results));
+        return console.log("successfully send the subscription");
+      }
+    });
+  } catch (err) {
     res.status(400).json({
       message: "Error occured when collecting subscription",
       err
