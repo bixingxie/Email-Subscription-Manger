@@ -2,7 +2,6 @@ import React from "react";
 import {MaterialUITable} from "./MaterialUITable"
 import {MaterialUISpinner} from "./MaterialUISpinner"
 
-
 export class SubscriptionTable extends React.Component {
   constructor() {
     super();

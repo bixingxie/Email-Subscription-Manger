@@ -60,7 +60,7 @@ const getNumberOfEmails = (auth, labelID) => {
       // console.log("Message total: ", response.data.messagesTotal);
     })
     .catch(err => {
-      console.log(err);
+      // console.log(err);
     });
 };
 
@@ -131,7 +131,7 @@ const getEmailContent = (auth, emailID) => {
       });
     })
     .catch(err => {
-      console.log(err);
+      // console.log(err);
     });
 };
 
@@ -205,9 +205,9 @@ function searchLinkByKeyword(message, keyword) {
 // /**
 //  * pass the found link to database
 //  * @param {String} user
-//  * @param {String} timestamp 
-//  * @param {String} sender 
-//  * @param {String} link Link to be stored 
+//  * @param {String} timestamp
+//  * @param {String} sender
+//  * @param {String} link Link to be stored
 //  */
 // const passedToDB = (user, timestamp, sender, linkFetched) =>{
 //   sender = sender.replace(/"/g, "").replace(" ", "")
@@ -219,7 +219,7 @@ function searchLinkByKeyword(message, keyword) {
 //       console.log(sender);
 //       console.log(sql);
 //       return console.log(err);
-      
+
 //     } else {
 //       return console.log("successfully added link");
 //     }
@@ -228,8 +228,8 @@ function searchLinkByKeyword(message, keyword) {
 
 // /**
 //  * Prepare a sql query string
-//  * @param {} keys 
-//  * @param {*} emailList 
+//  * @param {} keys
+//  * @param {*} emailList
 //  */
 
 
@@ -256,7 +256,7 @@ const initoAuthObj = tokenObj => {
   oAuth.setCredentials(tokenObj);
 
   current_user = 'md3837'
-  
+
   return oAuth;
 };
 
@@ -272,7 +272,6 @@ router.post("/get_token", (req, res) => {
     getNumberOfEmails(oAuth, "INBOX");
   } catch (e) {
     res.send({ status: "ERROR" });
-    console.log(e);
   }
   res.send({ status: "SUCCUSS" });
 });
@@ -288,6 +287,14 @@ router.get("/manage_subscription/", (req, res) => {
     res.send();
   }
 });
+
+router.get("/unsubscribe", (req,res) => {
+  try {
+    console.log("HERE")
+  } catch (err) {
+    console.log(err)
+  }
+})
 
 app.listen(4000, () => {
   console.log("ESM Server listening on port 4000");

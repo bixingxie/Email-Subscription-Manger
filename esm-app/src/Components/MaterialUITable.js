@@ -16,34 +16,47 @@ const useStyles = makeStyles({
         minWidth: 650
     }
 });
-  
-export function MaterialUITable(props) {
-  const classes = useStyles();
 
-  return (
-    <Paper className={classes.root}>
-        <Table className={classes.table} aria-label="simple table">
-            <TableHead>
-            <TableRow>
-                <TableCell> # </TableCell>
-                <TableCell> Subscription Name </TableCell>
-                <TableCell> Unsubscribe Link </TableCell>
-            </TableRow>
-            </TableHead>
-            <TableBody>
-            {Object.keys(props.data).map((key, index) => (
-                <TableRow key={index}>
-                <TableCell component="th" scope="row">
-                    {index}
-                </TableCell>
-                <TableCell>{key}</TableCell>
-                <TableCell>{props.data[key]}</TableCell>
-                </TableRow>
-            ))}
-            </TableBody>
-        </Table>
-    </Paper>
-  );
+export class MaterialUITable extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      classes: useStyles
+    }
+  }
+  // unsubscribe(link) {
+  //   fetch("http://localhost:4000/unsubscribe/", {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json"
+  //     },
+  //     body: link,
+  //   });
+  // }
+  render() {
+    return (
+      <Paper className={this.state.classes.root}>
+          <Table className={this.state.classes.table} aria-label="simple table">
+              <TableHead>
+              <TableRow>
+                  <TableCell> # </TableCell>
+                  <TableCell> Subscription Name </TableCell>
+                  <TableCell> Unsubscribe Link </TableCell>
+              </TableRow>
+              </TableHead>
+              <TableBody>
+              {Object.keys(this.props.data).map((key, index) => (
+                  <TableRow key={index}>
+                  <TableCell component="th" scope="row">
+                      {index}
+                  </TableCell>
+                  <TableCell>{key}</TableCell>
+                  <TableCell><a href={this.props.data[key]}>Unsubscribe</a></TableCell>
+                  </TableRow>
+              ))}
+              </TableBody>
+          </Table>
+      </Paper>
+    );
+  }
 }
-
-
