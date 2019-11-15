@@ -6,6 +6,7 @@ import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
+import {UnsubscribeButton} from "./Unsubscribe";
 
 const useStyles = makeStyles({
     root: {
@@ -24,15 +25,7 @@ export class MaterialUITable extends React.Component {
       classes: useStyles
     }
   }
-  // unsubscribe(link) {
-  //   fetch("http://localhost:4000/unsubscribe/", {
-  //     method: "POST",
-  //     headers: {
-  //       "Content-Type": "application/json"
-  //     },
-  //     body: link,
-  //   });
-  // }
+
   render() {
     return (
       <Paper className={this.state.classes.root}>
@@ -51,7 +44,7 @@ export class MaterialUITable extends React.Component {
                       {index}
                   </TableCell>
                   <TableCell>{key}</TableCell>
-                  <TableCell><a href={this.props.data[key]}>Unsubscribe</a></TableCell>
+                  <TableCell><UnsubscribeButton link={this.props.data[key]}></UnsubscribeButton></TableCell>
                   </TableRow>
               ))}
               </TableBody>

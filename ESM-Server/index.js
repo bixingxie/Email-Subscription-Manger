@@ -5,6 +5,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const cheerio = require("cheerio");
 const mysql = require('mysql')
+const axios = require('axios');
 
 const app = express();
 const router = express.Router();
@@ -206,9 +207,9 @@ function searchLinkByKeyword(message, keyword) {
  */
 const passedToDB = (user, timestamp, sender, linkFetched) =>{
   sender = sender.replace(/"/g, "").replace(" ", "")
-  const jsTimeStamp = Date.parse(timestamp)/1000; 
+  const jsTimeStamp = Date.parse(timestamp)/1000;
 
-  const sql = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed 
+  const sql = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
   FROM all_links WHERE user="${user}" AND vendor="${sender}"`;
   connection.query(sql, (err, rst) =>{
     if (err) {
@@ -228,16 +229,16 @@ const passedToDB = (user, timestamp, sender, linkFetched) =>{
           update = true;
         }
       }
-      
+
       //update database
       if(valid){
         let sql;
         if(update){
-          sql = `UPDATE all_links SET link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp}) 
+          sql = `UPDATE all_links SET link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})
           WHERE user="${user}" AND vendor="${sender}"`;
         }else{
-          sql = `INSERT INTO all_links (user, vendor, link, unsubscribed, last_modified) 
-          VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp})) 
+          sql = `INSERT INTO all_links (user, vendor, link, unsubscribed, last_modified)
+          VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp}))
           ON DUPLICATE KEY UPDATE link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})`;
         }
         connection.query(sql, (err, results) =>{
@@ -323,10 +324,15 @@ router.get("/manage_subscription/", (req, res) => {
   })
 });
 
-router.get("/unsubscribe", (req,res) => {
+router.post("/unsubscribe", (req,res) => {
+  const link = req.body.link;
   try {
+    axios(link).then(response => {
+      const html = response.data;
+      console.log(html)
+    })
   } catch (err) {
-    console.log(err)
+      console.log("Unsubscribe Error: " + err)
   }
 })
 
