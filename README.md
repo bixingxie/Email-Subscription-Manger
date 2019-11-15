@@ -54,7 +54,18 @@ ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. E
 
 ### Databse 
 
-See `esm.sql` for a copy of databse schema. **Recommended**: running phpMyAdmin at `localhost:8889`
+**Recommended**: running phpMyAdmin at `localhost:8889`
+
+I'm using mysql 5.6
+Create a user ESMUser with password ESMPassword in mysql. It can be achieved by "add a new user" link on phpmyadmin under the Privileges tab, or by running 
+SET PASSWORD for 'ESMUser'@'localhost' = password('ESMPassword')
+in MySQL console.
+We need privileges Select, Insert, Create, Update
+
+Then we will create a database EmailSubscriptionManager and a table all_links
+
+CREATE DATABASE EmailSubscriptionManager;
+CREATE TABLE all_links (user VARCHAR(100) NOT NULL, vendor VARCHAR(300) NOT NULL, link VARCHAR(1000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor)); 
 
 
 

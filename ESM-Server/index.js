@@ -14,25 +14,22 @@ const CLIENT_SECRET = "ofE8qOpv4zKTJbWN9fwqJqXh";
 const CLIENT_ID =
   "602826117073-lt0upfo5khvk59dqf0u50ruor73rrg6n.apps.googleusercontent.com";
 
-// locally cached record of subscription. in the format of:
-// {vendorName : {typeofLink(subscription/unsubscribe) : [links]}}
-// therefore, accessing a link is subscription[vendorName]["subscription"][idx]
-const subscription = {};
 
-// const connection = mysql.createConnection({
-//   host: 'localhost',
-//   user: 'root',
-//   port: '3306',
-//   password: 'root',
-//   database: 'EmailSubscriptionManager'
-// })
 
-// // Connects to the MySQL database
-// connection.connect(err => {
-//   if (err) {
-//       return err;
-//   }
-// });
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'ESMUser',
+  port: '3306',
+  password: 'ESMPassword',
+  database: 'EmailSubscriptionManager'
+})
+
+// Connects to the MySQL database
+connection.connect(err => {
+  if (err) {
+      return err;
+  }
+});
 
 app.use(cors());
 app.use(bodyParser.json()); // support json encoded bodies
@@ -40,7 +37,8 @@ app.use(bodyParser.urlencoded({ extended: false })); // support encoded bodies
 app.use("/", router);
 
 //list of cached values for development before they are moved to database
-let current_user;
+let subscription = {};
+let current_user = "md3837";
 
 
 
@@ -122,8 +120,7 @@ const getEmailContent = (auth, emailID) => {
               text.indexOf("subscription") !== -1
             ) {
               const linkFetched = $(link).attr("href");
-              // passedToDB(current_user, emailDate, sender, linkFetched)
-              subscription[sender] = linkFetched;
+              passedToDB(current_user, emailDate, sender, linkFetched)
               return;
             }
           });
@@ -131,7 +128,7 @@ const getEmailContent = (auth, emailID) => {
       });
     })
     .catch(err => {
-      // console.log(err);
+      console.log(err);
     });
 };
 
@@ -188,10 +185,8 @@ function searchLinkByKeyword(message, keyword) {
       end = start + endstart + end + 1;
       const link = message.slice(start, end);
       if (link.search(keyword) > 0) {
-        // console.log("effective link: ", link);
         idx1 = link.search('"');
         idx2 = link.slice(idx1 + 1).search('"');
-        // console.log(idx1, " ", idx2);
         result.push([keyword, link.slice(idx1 + 1, idx1 + idx2 + 1)]);
       }
       message = message.slice(end);
@@ -202,36 +197,66 @@ function searchLinkByKeyword(message, keyword) {
   return result;
 }
 
-// /**
-//  * pass the found link to database
-//  * @param {String} user
-//  * @param {String} timestamp
-//  * @param {String} sender
-//  * @param {String} link Link to be stored
-//  */
-// const passedToDB = (user, timestamp, sender, linkFetched) =>{
-//   sender = sender.replace(/"/g, "").replace(" ", "")
-//   const jsTimeStamp = Date.parse(timestamp)/1000;
+/**
+ * pass the found link to database
+ * @param {String} user
+ * @param {String} timestamp
+ * @param {String} sender
+ * @param {String} link Link to be stored
+ */
+const passedToDB = (user, timestamp, sender, linkFetched) =>{
+  sender = sender.replace(/"/g, "").replace(" ", "")
+  const jsTimeStamp = Date.parse(timestamp)/1000; 
 
-//   const sql = `INSERT INTO links (user, vendor, link, unsubscribed, time) VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp} ))`;
-//   connection.query(sql, (err, results) =>{
-//     if (err) {
-//       console.log(sender);
-//       console.log(sql);
-//       return console.log(err);
+  const sql = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed 
+  FROM all_links WHERE user="${user}" AND vendor="${sender}"`;
+  connection.query(sql, (err, rst) =>{
+    if (err) {
+      // console.log(sender);
+      // console.log(sql);
+      return console.log(err);
+    } else {
+      var valid = false;
+      var update = false;
 
-//     } else {
-//       return console.log("successfully added link");
-//     }
-//   });
-// }
+      //check current status of record
+      if(rst.length == 0){
+        valid = true;
+      }else{
+        if(jsTimeStamp > rst[0].last_modified){
+          valid = true;
+          update = true;
+        }
+      }
+      
+      //update database
+      if(valid){
+        let sql;
+        if(update){
+          sql = `UPDATE all_links SET link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp}) 
+          WHERE user="${user}" AND vendor="${sender}"`;
+        }else{
+          sql = `INSERT INTO all_links (user, vendor, link, unsubscribed, last_modified) 
+          VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp})) 
+          ON DUPLICATE KEY UPDATE link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})`;
+        }
+        connection.query(sql, (err, results) =>{
+          if (err) {
+            return console.error(err);
+          } else {
+            return console.log("successfully added link");
+          }
+        });
+      }
+    }
+  });
+}
 
-// /**
-//  * Prepare a sql query string
-//  * @param {} keys
-//  * @param {*} emailList
-//  */
-
+/**
+ * Prepare a sql query string
+ * @param {} keys
+ * @param {*} emailList
+ */
 
 /**
  * Return an array of email content
@@ -254,9 +279,6 @@ const initoAuthObj = tokenObj => {
     REDIRECT_URLS[0]
   );
   oAuth.setCredentials(tokenObj);
-
-  current_user = 'md3837'
-
   return oAuth;
 };
 
@@ -277,20 +299,32 @@ router.post("/get_token", (req, res) => {
 });
 
 router.get("/manage_subscription/", (req, res) => {
-  try {
-    res.status(200).send(JSON.stringify(subscription));
-  } catch (err) {
-    res.status(400).json({
-      message: "Error fetching subscriptions.",
-      err
-    });
-    res.send();
-  }
+  sql = `select * from all_links where user="${current_user}"`
+  console.log("Looking for subscriptions")
+  connection.query(sql, (err, results) =>{
+    let subtable = {};
+    if(err){return console.error(err)}
+    else{
+      for(let i = 0; i < results.length; i++){
+        item = results[i]
+        subtable[item.vendor] = item.link
+      }
+    }
+
+    try {
+      res.status(200).send(JSON.stringify(subtable));
+    } catch (err) {
+      res.status(400).json({
+        message: "Error fetching subscriptions.",
+        err
+      });
+      res.send();
+    }
+  })
 });
 
 router.get("/unsubscribe", (req,res) => {
   try {
-    console.log("HERE")
   } catch (err) {
     console.log(err)
   }
