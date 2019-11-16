@@ -116,9 +116,8 @@ const getEmailContent = (auth, emailID) => {
               text.indexOf("subscribe") !== -1 ||
               text.indexOf("subscription") !== -1
             ) {
-              const linkFetched = $(link).attr("href");
-              passedToDB(current_user, emailDate, sender, linkFetched);
-              return;
+              const unsubLink = $(link).attr("href");
+              sendUnsubLinkToDB(current_user, emailDate, sender, unsubLink);
             }
           });
         }
@@ -150,26 +149,23 @@ function searchHeaders(headers, headerName) {
  * @param {String} sender
  * @param {String} link Link to be stored
  */
-const passedToDB = (user, timestamp, sender, linkFetched) => {
+const sendUnsubLinkToDB = (user, timestamp, sender, linkFetched) => {
   sender = sender.replace(/"/g, "").replace(" ", "");
   const jsTimeStamp = Date.parse(timestamp) / 1000;
 
-  const sql = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
+  const sqlSelectOneLink = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
   FROM all_links WHERE user="${user}" AND vendor="${sender}"`;
-  connection.query(sql, (err, rst) => {
+  connection.query(sqlSelectOneLink, (err, result) => {
     if (err) {
-      // console.log(sender);
-      // console.log(sql);
       return console.log(err);
     } else {
-      var valid = false;
-      var update = false;
+      let valid = false;
+      let update = false;
 
-      //check current status of record
-      if (rst.length == 0) {
+      if (result.length == 0) {
         valid = true;
       } else {
-        if (jsTimeStamp > rst[0].last_modified) {
+        if (jsTimeStamp > result[0].last_modified) {
           valid = true;
           update = true;
         }
@@ -190,7 +186,7 @@ const passedToDB = (user, timestamp, sender, linkFetched) => {
           if (err) {
             return console.error(err);
           } else {
-            return console.log("successfully added link");
+            return console.log("sendUnsubLinkToDB: unsubscription link sent to DB");
           }
         });
       }
