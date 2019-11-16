@@ -1,5 +1,6 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
+import { UnsubscribeButton } from "./Unsubscribe";
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -51,7 +52,7 @@ export class MaterialUITable extends React.Component {
                       {index}
                   </TableCell>
                   <TableCell>{key}</TableCell>
-                  <TableCell><a href={this.props.data[key]}>Unsubscribe</a></TableCell>
+                  <TableCell><UnsubscribeButton link={this.props.data[key]}></UnsubscribeButton></TableCell>
                   </TableRow>
               ))}
               </TableBody>
