@@ -1,6 +1,19 @@
 import React from 'react';
+import { makeStyles } from '@material-ui/core/styles';
+import Button from '@material-ui/core/Button';
+
+const useStyles = makeStyles(theme => ({
+  button: {
+    margin: theme.spacing(1),
+  },
+  input: {
+    display: 'none',
+  },
+}));
 
 export function UnsubscribeButton(props) {
+  const classes = useStyles();
+
   function unsubscribe(link) {
     fetch("http://localhost:4000/unsubscribe/", {
       method: "POST",
@@ -14,8 +27,9 @@ export function UnsubscribeButton(props) {
     })
     console.log(link)
   }
+
   return (
-    <button onClick={() => unsubscribe(props.link)}>Unsubscribe</button>
+    <Button onClick={() => unsubscribe(props.link)} >Unsubscribe</Button>
   );
 }
   
