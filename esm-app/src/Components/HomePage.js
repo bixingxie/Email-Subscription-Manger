@@ -103,12 +103,12 @@ export class HomePage extends React.Component {
         <HomePageCard
           userName={this.state.userName ? this.state.userName : "please log in"}
         />
-        <Card>{logInOrOutButton}</Card>
         
         <Card>
           {this.state.isAuthenticated ? <SubscriptionTable /> : <hr />}
         </Card>
 
+        <Card>{logInOrOutButton}</Card>
 
       </Paper>
     );
