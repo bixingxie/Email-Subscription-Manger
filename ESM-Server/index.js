@@ -4,8 +4,8 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cheerio = require("cheerio");
-const mysql = require('mysql')
-const axios = require('axios');
+const mysql = require("mysql");
+const axios = require("axios");
 
 const app = express();
 const router = express.Router();
@@ -15,20 +15,18 @@ const CLIENT_SECRET = "ofE8qOpv4zKTJbWN9fwqJqXh";
 const CLIENT_ID =
   "602826117073-lt0upfo5khvk59dqf0u50ruor73rrg6n.apps.googleusercontent.com";
 
-
-
 const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'ESMUser',
-  port: '3306',
-  password: 'ESMPassword',
-  database: 'EmailSubscriptionManager'
-})
+  host: "localhost",
+  user: "ESMUser",
+  port: "8889",
+  password: "ESMPassword",
+  database: "EmailSubscriptionManager"
+});
 
 // Connects to the MySQL database
 connection.connect(err => {
   if (err) {
-      return err;
+    return err;
   }
 });
 
@@ -40,8 +38,6 @@ app.use("/", router);
 //list of cached values for development before they are moved to database
 let subscription = {};
 let current_user = "md3837";
-
-
 
 /**
  * Get number of emails under a particular label.
@@ -120,9 +116,8 @@ const getEmailContent = (auth, emailID) => {
               text.indexOf("subscribe") !== -1 ||
               text.indexOf("subscription") !== -1
             ) {
-              const linkFetched = $(link).attr("href");
-              passedToDB(current_user, emailDate, sender, linkFetched)
-              return;
+              const unsubLink = $(link).attr("href");
+              sendUnsubLinkToDB(current_user, emailDate, sender, unsubLink);
             }
           });
         }
@@ -148,110 +143,56 @@ function searchHeaders(headers, headerName) {
 }
 
 /**
- * Finds an array of hyperlinks that match the keyword.
- * @param   {string} message     The email.
- * @param   {Array}  keywordList A list of keyword to search for.
- * @param   {string} sender      Sender of the email.
- * @param   {string} date        Date when the email is sent.
- *
- * @returns {string} Returns the value of the header if found, undefined otherwise.
- */
-function getUnsubscriptionLink(message, keywordList, sender, date) {
-  const links = {};
-
-  keywordList.forEach(item => {
-    const keywordLink = searchLinkByKeyword(message, item);
-    if (keywordLink.length > 0) {
-      links[item] = keywordLink;
-    }
-  });
-  if (Object.keys(links).length > 0) {
-    subscription[sender] = links;
-  }
-}
-
-//finds an array of hyperlinks with the given keyword
-function searchLinkByKeyword(message, keyword) {
-  let result = [];
-
-  while (message.search("<a href=")) {
-    const start = message.search("<a href=");
-    if (start == -1) {
-      break;
-    }
-    const endstart = message.slice(start).search("</ *a *>");
-    let end;
-    if (endstart > 0) {
-      end = message.slice(start + endstart).search(">");
-      end = start + endstart + end + 1;
-      const link = message.slice(start, end);
-      if (link.search(keyword) > 0) {
-        idx1 = link.search('"');
-        idx2 = link.slice(idx1 + 1).search('"');
-        result.push([keyword, link.slice(idx1 + 1, idx1 + idx2 + 1)]);
-      }
-      message = message.slice(end);
-    } else {
-      message = message.slice(start + 1);
-    }
-  }
-  return result;
-}
-
-/**
  * pass the found link to database
  * @param {String} user
  * @param {String} timestamp
  * @param {String} sender
  * @param {String} link Link to be stored
  */
-const passedToDB = (user, timestamp, sender, linkFetched) =>{
-  sender = sender.replace(/"/g, "").replace(" ", "")
-  const jsTimeStamp = Date.parse(timestamp)/1000;
+const sendUnsubLinkToDB = (user, timestamp, sender, linkFetched) => {
+  sender = sender.replace(/"/g, "").replace(" ", "");
+  const jsTimeStamp = Date.parse(timestamp) / 1000;
 
-  const sql = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
+  const sqlSelectOneLink = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
   FROM all_links WHERE user="${user}" AND vendor="${sender}"`;
-  connection.query(sql, (err, rst) =>{
+  connection.query(sqlSelectOneLink, (err, result) => {
     if (err) {
-      // console.log(sender);
-      // console.log(sql);
       return console.log(err);
     } else {
-      var valid = false;
-      var update = false;
+      let valid = false;
+      let update = false;
 
-      //check current status of record
-      if(rst.length == 0){
+      if (result.length == 0) {
         valid = true;
-      }else{
-        if(jsTimeStamp > rst[0].last_modified){
+      } else {
+        if (jsTimeStamp > result[0].last_modified) {
           valid = true;
           update = true;
         }
       }
 
       //update database
-      if(valid){
+      if (valid) {
         let sql;
-        if(update){
+        if (update) {
           sql = `UPDATE all_links SET link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})
           WHERE user="${user}" AND vendor="${sender}"`;
-        }else{
+        } else {
           sql = `INSERT INTO all_links (user, vendor, link, unsubscribed, last_modified)
           VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp}))
           ON DUPLICATE KEY UPDATE link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})`;
         }
-        connection.query(sql, (err, results) =>{
+        connection.query(sql, (err, results) => {
           if (err) {
             return console.error(err);
           } else {
-            return console.log("successfully added link");
+            return console.log("sendUnsubLinkToDB: unsubscription link sent to DB");
           }
         });
       }
     }
   });
-}
+};
 
 /**
  * Prepare a sql query string
@@ -300,15 +241,16 @@ router.post("/get_token", (req, res) => {
 });
 
 router.get("/manage_subscription/", (req, res) => {
-  sql = `select * from all_links where user="${current_user}"`
-  console.log("Looking for subscriptions")
-  connection.query(sql, (err, results) =>{
+  sql = `select * from all_links where user="${current_user}"`;
+  console.log("Looking for subscriptions");
+  connection.query(sql, (err, results) => {
     let subtable = {};
-    if(err){return console.error(err)}
-    else{
-      for(let i = 0; i < results.length; i++){
-        item = results[i]
-        subtable[item.vendor] = item.link
+    if (err) {
+      return console.error(err);
+    } else {
+      for (let i = 0; i < results.length; i++) {
+        item = results[i];
+        subtable[item.vendor] = item.link;
       }
     }
 
@@ -321,20 +263,20 @@ router.get("/manage_subscription/", (req, res) => {
       });
       res.send();
     }
-  })
+  });
 });
 
-router.post("/unsubscribe", (req,res) => {
+router.post("/unsubscribe", (req, res) => {
   const link = req.body.link;
   try {
     axios(link).then(response => {
       const html = response.data;
-      console.log(html)
-    })
+      console.log(html);
+    });
   } catch (err) {
-      console.log("/unsubscribe" + err)
+    console.log("/unsubscribe" + err);
   }
-})
+});
 
 app.listen(4000, () => {
   console.log("ESM Server listening on port 4000");
