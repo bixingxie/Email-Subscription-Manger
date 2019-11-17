@@ -1,6 +1,7 @@
 import React from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
+import Tooltip from '@material-ui/core/Tooltip';
 
 const useStyles = makeStyles(theme => ({
   button: {
@@ -29,7 +30,9 @@ export function UnsubscribeButton(props) {
   }
 
   return (
-    <Button onClick={() => unsubscribe(props.link)} >Unsubscribe</Button>
+    <Tooltip title={props.link}>
+      <Button onClick={() => unsubscribe(props.link)} >Unsubscribe</Button>
+   </Tooltip>
   );
 }
   

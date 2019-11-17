@@ -2,7 +2,7 @@ import React from "react";
 import {TableContent} from "./TableContent"
 import {Spinner} from "./Spinner"
 
-export class SubscriptionTable extends React.Component {
+export class UnsubbedTable extends React.Component {
   constructor() {
     super();
     this.state = {
@@ -12,7 +12,7 @@ export class SubscriptionTable extends React.Component {
   }
 
   componentDidMount() {
-    fetch("http://localhost:4000/manage_subscription/", {
+    fetch("http://localhost:4000/manage_subscription/?unsub=1", {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json"
@@ -28,7 +28,7 @@ export class SubscriptionTable extends React.Component {
 
     if (isLoaded) {
       content = (
-        <TableContent data={this.state.data}/>
+        <TableContent data={this.state.data} unsub/>
       );
     } else {
       content = (

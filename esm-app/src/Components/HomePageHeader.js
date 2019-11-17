@@ -21,7 +21,7 @@ const useStyles = makeStyles({
   }
 });
 
-export default function HomePageCard(props) {
+export default function HomePageHeader(props) {
   const classes = useStyles();
 
   return (

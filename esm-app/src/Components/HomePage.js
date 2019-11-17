@@ -1,11 +1,11 @@
 import React from "react";
-import { SubscriptionTable } from "./SubscriptionTable";
+import { HomePageBody } from "./HomePageBody"
 import { GoogleLogin } from "react-google-login";
 import { GoogleLogout } from "react-google-login";
 import localStorage from "local-storage";
 import Paper from "@material-ui/core/Paper";
 import Card from "@material-ui/core/Card";
-import HomePageCard from "./HomePageCard";
+import HomePageHeader from "./HomePageHeader";
 
 // Given by Google API
 const CLIENT_ID =
@@ -100,15 +100,15 @@ export class HomePage extends React.Component {
 
     return (
       <Paper>
-        <HomePageCard
+        <HomePageHeader
           userName={this.state.userName ? this.state.userName : "please log in"}
         />
-        <Card>{logInOrOutButton}</Card>
         
         <Card>
-          {this.state.isAuthenticated ? <SubscriptionTable /> : <hr />}
+          {this.state.isAuthenticated ? <HomePageBody /> : <hr />}
         </Card>
 
+        <Card>{logInOrOutButton}</Card>
 
       </Paper>
     );
