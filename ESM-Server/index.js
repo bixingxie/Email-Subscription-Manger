@@ -245,10 +245,10 @@ router.get("/manage_subscription/", (req, res) => {
     if (err) {
       return console.error(err);
     } else {
-      for (let i = 0; i < results.length; i++) {
-        item = results[i];
-        subtable[item.vendor] = {url: item.link, date: item.last_modified};
-      }
+      results.forEach(item => {
+        const date = JSON.stringify(item.last_modified).split("T")[0].slice(1, )
+        subtable[item.vendor] = {url: item.link, date: date};
+      })
     }
 
     try {
