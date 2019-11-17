@@ -41,6 +41,7 @@ export function TableContent(props) {
               {index}
             </TableCell>
             <TableCell>{key}</TableCell>
+            <TableCell>{props.data[key]["date"]}</TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -64,7 +65,7 @@ export function TableContent(props) {
             </TableCell>
             <TableCell>{key}</TableCell>
             <TableCell>
-              <UnsubscribeButton link={props.data[key]}></UnsubscribeButton>
+              <UnsubscribeButton link={props.data[key]["url"]}></UnsubscribeButton>
             </TableCell>
           </TableRow>
         ))}

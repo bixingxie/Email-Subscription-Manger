@@ -237,16 +237,17 @@ router.post("/get_token", (req, res) => {
 });
 
 router.get("/manage_subscription/", (req, res) => {
-  sql = `SELECT * FROM all_links WHERE user="${current_user}"`;
-  console.log("Looking for subscriptions");
-  connection.query(sql, (err, results) => {
-    let subtable = {};
+  const sql = `SELECT * FROM all_links WHERE user="${current_user}"` 
+  const fullSql = Object.keys(req.query).length == 0 ? sql : sql+` AND unsubscribed=1` 
+
+  connection.query(fullSql, (err, results) => {
+    const subtable = {};
     if (err) {
       return console.error(err);
     } else {
       for (let i = 0; i < results.length; i++) {
         item = results[i];
-        subtable[item.vendor] = item.link;
+        subtable[item.vendor] = {url: item.link, date: item.last_modified};
       }
     }
 
