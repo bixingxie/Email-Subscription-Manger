@@ -264,27 +264,53 @@ router.get("/manage_subscription/", (req, res) => {
 });
 
 const oneClickUnsub = url => {
-  var selector = ""
-  var buttonsArr = [];
-  const nightmare = Nightmare({ show: true })
-  nightmare.goto(url).evaluate((buttonsArr) => {
-    var buttons = document.getElementsByTagName('button')
-    for (button of buttons) {
-      buttonsArr.push({class: button.class, name: button.name, html: button.innerHTML})
-      // if(button.innerHTML.includes("Unsubscribe")) {
-      //   selector = button.class
-      // }
-    }
-    return buttonsArr
-  }, buttonsArr)
-  .end()
-  .then((buttonsArr) => {
-    console.log(buttonsArr)
-  })
-  .catch(error => {
-    console.error("oneClickUnsub() " + error)
-    nightmare.end()
-  });
+
+  var debugArr = [];
+  const nightmare = Nightmare(
+    { openDevTools: {
+      mode: 'detach'
+    },
+    show: true })
+  nightmare
+    .goto(url)
+    .evaluate((debugArr) => {
+      var buttons = document.getElementsByTagName('button')
+      var inputs = document.getElementsByTagName('input')
+
+      function checkKeywords(string) {
+        var keywords = ["unsubscribe", "confirm"]
+        var returnVal = false
+        for (keyword of keywords) {
+          returnVal = (string.toLowerCase().includes(keyword) || returnVal)
+        }
+        return returnVal
+      }
+
+      function decide(elements) {
+        for (element of elements) {
+          if(checkKeywords(element.innerHTML) || checkKeywords(element.value)) {
+            element.className += " unsubscribe-click-object"
+          }
+          debugArr.push({class: element.className, name: element.name, html: element.innerHTML})
+        }
+      }
+
+      decide(buttons)
+      decide(inputs)
+
+      return debugArr
+    }, debugArr)
+    .click(".unsubscribe-click-object")
+    .end()
+    .then((debugArr) => { //debugArray only works when .click() line above is commented out
+      // console.log(debugArr)
+      return true
+    })
+    .catch(error => {
+      console.log("oneClickUnsub() " + error)
+      nightmare.end()
+      return false
+    });
 }
 
 router.post("/unsubscribe", (req,res) => {
