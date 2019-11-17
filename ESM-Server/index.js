@@ -18,7 +18,7 @@ const CLIENT_ID =
 const connection = mysql.createConnection({
   host: "localhost",
   user: "ESMUser",
-  port: "3306",
+  port: "8889",
   password: "ESMPassword",
   database: "EmailSubscriptionManager"
 });
@@ -37,7 +37,7 @@ app.use("/", router);
 
 //list of cached values for development before they are moved to database
 let subscription = {};
-let current_user = "md3837";
+let current_user = "bx357";
 
 /**
  * Get number of emails under a particular label.
@@ -263,8 +263,7 @@ router.get("/manage_subscription/", (req, res) => {
   });
 });
 
-const oneClickUnsub = url => {
-
+const oneClickUnsub = (url, res) => {
   var debugArr = [];
   const nightmare = Nightmare(
     { openDevTools: {
@@ -277,7 +276,7 @@ const oneClickUnsub = url => {
       var buttons = document.getElementsByTagName('button')
       var inputs = document.getElementsByTagName('input')
 
-      function checkKeywords(string) {
+      const checkKeywords = string => {
         var keywords = ["unsubscribe", "confirm"]
         var returnVal = false
         for (keyword of keywords) {
@@ -286,7 +285,7 @@ const oneClickUnsub = url => {
         return returnVal
       }
 
-      function decide(elements) {
+      const decide = elements => {
         for (element of elements) {
           if(checkKeywords(element.innerHTML) || checkKeywords(element.value)) {
             element.className += " unsubscribe-click-object"
@@ -302,14 +301,16 @@ const oneClickUnsub = url => {
     }, debugArr)
     .click(".unsubscribe-click-object")
     .end()
-    .then((debugArr) => { //debugArray only works when .click() line above is commented out
-      // console.log(debugArr)
-      return true
-    })
+    // .then((debugArr) => { //debugArray only works when .click() line above is commented out
+    //   // console.log(debugArr)
+    // })
+    .then(
+      res.send({ status: "SUCCUSS" })
+    )
     .catch(error => {
       console.log("oneClickUnsub() " + error)
+      res.send({ status: "ERROR" })
       nightmare.end()
-      return false
     });
 }
 
@@ -317,7 +318,8 @@ router.post("/unsubscribe", (req,res) => {
   const url = req.body.link;
   console.log("/unsubscribe called to url: " + url)
   try {
-    oneClickUnsub(url)
+     oneClickUnsub(url, res)
+    console.log("success: ", success)
     res.sendStatus(200)
   } catch (err) {
       console.log("/unsubscribe " + err)

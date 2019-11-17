@@ -7,6 +7,7 @@ import Typography from '@material-ui/core/Typography';
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import EmailIcon from "@material-ui/icons/Email";
+import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 import {SubscriptionTable} from "./SubscriptionTable";
 import {UnsubbedTable} from "./UnsubbedTable";
 
@@ -63,7 +64,7 @@ export function HomePageBody() {
         aria-label="icon label tabs"
       >
         <Tab icon={<EmailIcon />} label="Keep" {...a11yProps(0)} />
-        <Tab icon={<EmailIcon />} label="Unsubscribed" />
+        <Tab icon={<DeleteForeverIcon />} label="Unsubscribed" />
         </Tabs>
 
         <TabPanel value={value} index={0}>
