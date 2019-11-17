@@ -5,7 +5,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const cheerio = require("cheerio");
 const mysql = require("mysql");
-const axios = require("axios");
+const Nightmare = require('nightmare');
 
 const app = express();
 const router = express.Router();
@@ -18,7 +18,7 @@ const CLIENT_ID =
 const connection = mysql.createConnection({
   host: "localhost",
   user: "ESMUser",
-  port: "8889",
+  port: "3306",
   password: "ESMPassword",
   database: "EmailSubscriptionManager"
 });
@@ -237,8 +237,8 @@ router.post("/get_token", (req, res) => {
 });
 
 router.get("/manage_subscription/", (req, res) => {
-  const sql = `SELECT * FROM all_links WHERE user="${current_user}"` 
-  const fullSql = Object.keys(req.query).length == 0 ? sql : sql+` AND unsubscribed=1` 
+  const sql = `SELECT * FROM all_links WHERE user="${current_user}"`
+  const fullSql = Object.keys(req.query).length == 0 ? sql : sql+` AND unsubscribed=1`
 
   connection.query(fullSql, (err, results) => {
     const subtable = {};
@@ -263,17 +263,40 @@ router.get("/manage_subscription/", (req, res) => {
   });
 });
 
-router.post("/unsubscribe", (req, res) => {
-  const link = req.body.link;
+const oneClickUnsub = url => {
+  var selector = ""
+  var buttonsArr = [];
+  const nightmare = Nightmare({ show: true })
+  nightmare.goto(url).evaluate((buttonsArr) => {
+    var buttons = document.getElementsByTagName('button')
+    for (button of buttons) {
+      buttonsArr.push({class: button.class, name: button.name, html: button.innerHTML})
+      // if(button.innerHTML.includes("Unsubscribe")) {
+      //   selector = button.class
+      // }
+    }
+    return buttonsArr
+  }, buttonsArr)
+  .end()
+  .then((buttonsArr) => {
+    console.log(buttonsArr)
+  })
+  .catch(error => {
+    console.error("oneClickUnsub() " + error)
+    nightmare.end()
+  });
+}
+
+router.post("/unsubscribe", (req,res) => {
+  const url = req.body.link;
+  console.log("/unsubscribe called to url: " + url)
   try {
-    axios(link).then(response => {
-      const html = response.data;
-      console.log(html);
-    });
+    oneClickUnsub(url)
+    res.sendStatus(200)
   } catch (err) {
-    console.log("/unsubscribe" + err);
+      console.log("/unsubscribe " + err)
   }
-});
+})
 
 app.listen(4000, () => {
   console.log("ESM Server listening on port 4000");
