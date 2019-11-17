@@ -1,5 +1,5 @@
 import React from "react";
-import { SubscriptionTable } from "./SubscriptionTable";
+import { HomePageBody } from "./HomePageBody"
 import { GoogleLogin } from "react-google-login";
 import { GoogleLogout } from "react-google-login";
 import localStorage from "local-storage";
@@ -105,7 +105,7 @@ export class HomePage extends React.Component {
         />
         
         <Card>
-          {this.state.isAuthenticated ? <SubscriptionTable /> : <hr />}
+          {this.state.isAuthenticated ? <HomePageBody /> : <hr />}
         </Card>
 
         <Card>{logInOrOutButton}</Card>
