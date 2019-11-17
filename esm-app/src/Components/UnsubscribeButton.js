@@ -30,7 +30,7 @@ export function UnsubscribeButton(props) {
   }
 
   return (
-    <Tooltip title={props.link} classes={{ tooltip: 500 }}>
+    <Tooltip title={props.link}>
       <Button onClick={() => unsubscribe(props.link)} >Unsubscribe</Button>
    </Tooltip>
   );

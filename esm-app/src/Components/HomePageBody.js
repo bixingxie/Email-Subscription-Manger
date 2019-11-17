@@ -7,7 +7,8 @@ import Typography from '@material-ui/core/Typography';
 import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import EmailIcon from "@material-ui/icons/Email";
-import {SubscriptionTable} from "./SubscriptionTable"
+import {SubscriptionTable} from "./SubscriptionTable";
+import {UnsubbedTable} from "./UnsubbedTable";
 
 function TabPanel(props) {
         const { children, value, index, ...other } = props;
@@ -69,7 +70,7 @@ export function HomePageBody() {
                 <SubscriptionTable/>
         </TabPanel>
         <TabPanel value={value} index={1}>
-                Something
+                <UnsubbedTable/>
         </TabPanel>
     </Paper>
   );

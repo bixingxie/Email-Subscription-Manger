@@ -20,31 +20,64 @@ const useStyles = makeStyles({
 
 export function TableContent(props) {
   const classes = useStyles();
+  let tableHead;
+  let tableBody;
+
+  if (props.unsub) {
+    tableHead = (
+      <TableHead>
+        <TableRow>
+          <TableCell> # </TableCell>
+          <TableCell> Subscription Name </TableCell>
+          <TableCell> Unsubscribed Date </TableCell>
+        </TableRow>
+      </TableHead>
+    );
+    tableBody = (
+      <TableBody>
+        {Object.keys(props.data).map((key, index) => (
+          <TableRow key={index}>
+            <TableCell component="th" scope="row">
+              {index}
+            </TableCell>
+            <TableCell>{key}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    );
+  } else {
+    tableHead = (
+      <TableHead>
+        <TableRow>
+          <TableCell> # </TableCell>
+          <TableCell> Subscription Name </TableCell>
+          <TableCell> Unsubscribe Link </TableCell>
+        </TableRow>
+      </TableHead>
+    );
+    tableBody = (
+      <TableBody>
+        {Object.keys(props.data).map((key, index) => (
+          <TableRow key={index}>
+            <TableCell component="th" scope="row">
+              {index}
+            </TableCell>
+            <TableCell>{key}</TableCell>
+            <TableCell>
+              <UnsubscribeButton link={props.data[key]}></UnsubscribeButton>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    );
+  }
 
   return (
     <Paper className={classes.root}>
       <div className={classes.tableWrapper}>
         <Table stickyHeader aria-label="sticky table">
-          <TableHead>
-            <TableRow>
-              <TableCell> # </TableCell>
-              <TableCell> Subscription Name </TableCell>
-              <TableCell> Unsubscribe Link </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {Object.keys(props.data).map((key, index) => (
-              <TableRow key={index}>
-                <TableCell component="th" scope="row">
-                  {index}
-                </TableCell>
-                <TableCell>{key}</TableCell>
-                <TableCell>
-                  <UnsubscribeButton link={props.data[key]}></UnsubscribeButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
+          {tableHead}
+          {tableBody}
         </Table>
       </div>
     </Paper>
