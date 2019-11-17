@@ -186,19 +186,15 @@ const sendUnsubLinkToDB = (user, timestamp, sender, linkFetched) => {
           if (err) {
             return console.error(err);
           } else {
-            return console.log("sendUnsubLinkToDB: unsubscription link sent to DB");
+            return console.log(
+              "sendUnsubLinkToDB: unsubscription link sent to DB"
+            );
           }
         });
       }
     }
   });
 };
-
-/**
- * Prepare a sql query string
- * @param {} keys
- * @param {*} emailList
- */
 
 /**
  * Return an array of email content
@@ -241,7 +237,7 @@ router.post("/get_token", (req, res) => {
 });
 
 router.get("/manage_subscription/", (req, res) => {
-  sql = `select * from all_links where user="${current_user}"`;
+  sql = `SELECT * FROM all_links WHERE user="${current_user}"`;
   console.log("Looking for subscriptions");
   connection.query(sql, (err, results) => {
     let subtable = {};
