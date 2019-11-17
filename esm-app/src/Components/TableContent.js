@@ -18,7 +18,7 @@ const useStyles = makeStyles({
   }
 });
 
-export function MaterialUITable(props) {
+export function TableContent(props) {
   const classes = useStyles();
 
   return (
