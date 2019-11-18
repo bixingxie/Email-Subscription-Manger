@@ -59,7 +59,7 @@ export class HomePage extends React.Component {
         // Accept: "application/json",
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(this.state.tokenObj),
+      body: JSON.stringify([this.state.tokenObj, this.state.userEmail]),
     });
   };
 
