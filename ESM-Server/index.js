@@ -5,7 +5,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const cheerio = require("cheerio");
 const mysql = require("mysql");
-const Nightmare = require('nightmare');
+const Nightmare = require("nightmare");
 
 const app = express();
 const router = express.Router();
@@ -54,7 +54,7 @@ const getNumberOfEmails = (auth, labelID) => {
     .then(response => {
       // console.log("Message total: ", response.data.messagesTotal);
     })
-    .catch(err => { 
+    .catch(err => {
       // console.log(err);
     });
 };
@@ -237,8 +237,11 @@ router.post("/get_token", (req, res) => {
 });
 
 router.get("/manage_subscription/", (req, res) => {
-  const sql = `SELECT * FROM all_links WHERE user="${current_user}"`
-  const fullSql = Object.keys(req.query).length == 0 ? (sql + ` AND unsubscribed=0`): (sql+` AND unsubscribed=1`)
+  const sql = `SELECT * FROM all_links WHERE user="${current_user}"`;
+  const fullSql =
+    Object.keys(req.query).length == 0
+      ? sql + ` AND unsubscribed=0`
+      : sql + ` AND unsubscribed=1`;
 
   connection.query(fullSql, (err, results) => {
     const subtable = {};
@@ -246,9 +249,11 @@ router.get("/manage_subscription/", (req, res) => {
       return console.error(err);
     } else {
       results.forEach(item => {
-        const date = JSON.stringify(item.last_modified).split("T")[0].slice(1, )
-        subtable[item.vendor] = {url: item.link, date: date};
-      })
+        const date = JSON.stringify(item.last_modified)
+          .split("T")[0]
+          .slice(1);
+        subtable[item.vendor] = { url: item.link, date: date };
+      });
     }
 
     try {
@@ -263,77 +268,81 @@ router.get("/manage_subscription/", (req, res) => {
   });
 });
 
-
 const oneClickUnsub = url => {
   var debugArr = [];
-  const nightmare = Nightmare(
-    { openDevTools: {
-      mode: 'detach'
+  const nightmare = Nightmare({
+    openDevTools: {
+      mode: "detach"
     },
 
-    show: false })
+    show: false
+  });
 
   return new Promise(resolve => {
     nightmare
       .goto(url)
-      .evaluate((debugArr) => {
-        var buttons = document.getElementsByTagName('button')
-        var inputs = document.getElementsByTagName('input')
+      .evaluate(debugArr => {
+        var buttons = document.getElementsByTagName("button");
+        var inputs = document.getElementsByTagName("input");
 
         function checkKeywords(string) {
-          var keywords = ["unsubscribe", "confirm"]
-          var returnVal = false
+          var keywords = ["unsubscribe", "confirm"];
+          var returnVal = false;
           for (keyword of keywords) {
-            returnVal = (string.toLowerCase().includes(keyword) || returnVal)
+            returnVal = string.toLowerCase().includes(keyword) || returnVal;
           }
-          return returnVal
-
+          return returnVal;
         }
-
 
         function decide(elements) {
           for (element of elements) {
-            if(checkKeywords(element.innerHTML) || checkKeywords(element.value)) {
-              element.className += " unsubscribe-click-object"
+            if (
+              checkKeywords(element.innerHTML) ||
+              checkKeywords(element.value)
+            ) {
+              element.className += " unsubscribe-click-object";
             }
-            debugArr.push({class: element.className, name: element.name, html: element.innerHTML})
-
+            debugArr.push({
+              class: element.className,
+              name: element.name,
+              html: element.innerHTML
+            });
           }
         }
 
+        decide(buttons);
+        decide(inputs);
 
-        decide(buttons)
-        decide(inputs)
-
-        return debugArr
+        return debugArr;
       }, debugArr)
       .click(".unsubscribe-click-object")
       .end()
-      .then((debugArr) => { //debugArray only works when .click() line above is commented out
+      .then(debugArr => {
+        //debugArray only works when .click() line above is commented out
         // console.log(debugArr)
-        console.log("oneClickUnsub() Sucuess")
-        resolve(true)
+        console.log("oneClickUnsub() Sucuess");
+        resolve(true);
       })
       .catch(error => {
-        console.log("oneClickUnsub() One-click option unavailable" )
-        nightmare.end()
-        resolve(false)
+        console.log("oneClickUnsub() One-click option unavailable");
+        nightmare.end();
+        resolve(false);
       });
-  })
-}
+  });
+};
 
-router.post("/unsubscribe", async (req,res) => {
+router.post("/unsubscribe", async (req, res) => {
   const url = req.body.link;
-  console.log("/unsubscribe called to url: " + url)
+  console.log("/unsubscribe called to url: " + url);
   try {
-    await oneClickUnsub(url).then((response) => {
-      console.log("/unsubscribe " + response)
-      res.sendStatus(200)
-    })
+    await oneClickUnsub(url).then(response => {
+      console.log("/unsubscribe " + response);
+      res.sendStatus(200);
+    });
   } catch (err) {
-      console.log("/unsubscribe " + err)
+    console.log("/unsubscribe " + err);
   }
-})
+});
 
 app.listen(4000, () => {
   console.log("ESM Server listening on port 4000");
