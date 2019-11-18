@@ -1,14 +1,51 @@
 import React from "react";
-import {MaterialUITable} from "./MaterialUITable"
-import {MaterialUISpinner} from "./MaterialUISpinner"
+import {TableContent} from "./TableContent"
+import {Spinner} from "./Spinner"
 
 export class SubscriptionTable extends React.Component {
   constructor() {
     super();
     this.state = {
       data: null,
-      loaded: false
+      loaded: false, 
+      unsubInProgress: false
     };
+  }
+
+  persistUnsubscribeToDB = vendor => {
+    fetch(`http://localhost:4000/persistUnsubscribe/?vendor=${vendor}`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      }
+    })
+      .then(console.log("persistUnsubscribeToDB: SUCCUESS"))
+  }
+
+  handlesUnsubscribe = vendor =>  {
+    this.setState({unsubInProgress: true}, () => {
+      fetch("http://localhost:4000/unsubscribe/", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        link: this.state.data[vendor]["url"]
+      })
+      })
+      .then(response => response.json())
+      .then((response) => {
+        if (response.status === "SUCCESS") {
+          const {[vendor]: value, ...newData} = this.state.data
+          this.setState({data: newData})
+          this.persistUnsubscribeToDB(vendor)
+        } else {
+          console.log("error unsubbing")
+        }
+        this.setState({unsubInProgress: false})
+      })
+    })
   }
 
   componentDidMount() {
@@ -25,14 +62,15 @@ export class SubscriptionTable extends React.Component {
   render() {
     const isLoaded = this.state.loaded;
     let content;
+    console.log(this.state.unsubInProgress)
 
     if (isLoaded) {
       content = (
-        <MaterialUITable data={this.state.data}/>
+        <TableContent data={this.state.data} handlesUnsubscribe={this.handlesUnsubscribe} unsubInProgress={this.state.unsubInProgress}/>
       );
     } else {
       content = (
-        <MaterialUISpinner/>
+        <Spinner/>
       );
     }
 

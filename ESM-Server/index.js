@@ -7,6 +7,7 @@ const cheerio = require("cheerio");
 const mysql = require('mysql');
 const axios = require('axios');
 const fetch = require("node-fetch");
+const Nightmare = require("nightmare");
 
 const app = express();
 const router = express.Router();
@@ -16,20 +17,18 @@ const CLIENT_SECRET = "ofE8qOpv4zKTJbWN9fwqJqXh";
 const CLIENT_ID =
   "602826117073-lt0upfo5khvk59dqf0u50ruor73rrg6n.apps.googleusercontent.com";
 
-
-
 const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'ESMUser',
-  port: '3306',
-  password: 'ESMPassword',
-  database: 'EmailSubscriptionManager'
-})
+  host: "localhost",
+  user: "ESMUser",
+  port: "3306",
+  password: "ESMPassword",
+  database: "EmailSubscriptionManager"
+});
 
 // Connects to the MySQL database
 connection.connect(err => {
   if (err) {
-      return err;
+    return err;
   }
 });
 
@@ -148,68 +147,17 @@ function searchHeaders(headers, headerName) {
 }
 
 /**
- * Finds an array of hyperlinks that match the keyword.
- * @param   {string} message     The email.
- * @param   {Array}  keywordList A list of keyword to search for.
- * @param   {string} sender      Sender of the email.
- * @param   {string} date        Date when the email is sent.
- *
- * @returns {string} Returns the value of the header if found, undefined otherwise.
- */
-function getUnsubscriptionLink(message, keywordList, sender, date) {
-  const links = {};
-
-  keywordList.forEach(item => {
-    const keywordLink = searchLinkByKeyword(message, item);
-    if (keywordLink.length > 0) {
-      links[item] = keywordLink;
-    }
-  });
-  if (Object.keys(links).length > 0) {
-    subscription[sender] = links;
-  }
-}
-
-//finds an array of hyperlinks with the given keyword
-function searchLinkByKeyword(message, keyword) {
-  let result = [];
-
-  while (message.search("<a href=")) {
-    const start = message.search("<a href=");
-    if (start == -1) {
-      break;
-    }
-    const endstart = message.slice(start).search("</ *a *>");
-    let end;
-    if (endstart > 0) {
-      end = message.slice(start + endstart).search(">");
-      end = start + endstart + end + 1;
-      const link = message.slice(start, end);
-      if (link.search(keyword) > 0) {
-        idx1 = link.search('"');
-        idx2 = link.slice(idx1 + 1).search('"');
-        result.push([keyword, link.slice(idx1 + 1, idx1 + idx2 + 1)]);
-      }
-      message = message.slice(end);
-    } else {
-      message = message.slice(start + 1);
-    }
-  }
-  return result;
-}
-
-/**
  * pass the found link to database
  * @param {String} user
  * @param {String} timestamp
  * @param {String} sender
  * @param {String} link Link to be stored
  */
-const passedToDB = (user, timestamp, sender, linkFetched) =>{
-  sender = sender.replace(/"/g, "").replace(" ", "")
-  const jsTimeStamp = Date.parse(timestamp)/1000;
+const passedToDB = (user, timestamp, sender, linkFetched) => {
+  sender = sender.replace(/"/g, "").replace(" ", "");
+  const jsTimeStamp = Date.parse(timestamp) / 1000;
 
-  const sql = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
+  const sqlSelectOneLink = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
   FROM all_links WHERE user="${user}" AND vendor="${sender}"`;
   // console.log(sql)
   connection.query(sql, (err, rst) =>{
@@ -219,18 +167,17 @@ const passedToDB = (user, timestamp, sender, linkFetched) =>{
       var valid = false; //if current vendor user pair is new to db
       var update = false; //if current vendor user paird needs be posted
 
-      //check current status of record
-      if(rst.length == 0){
+      if (result.length == 0) {
         valid = true;
-      }else{
-        if(jsTimeStamp > rst[0].last_modified){
+      } else {
+        if (jsTimeStamp > result[0].last_modified) {
           valid = true;
           update = true;
         }
       }
 
       //update database
-      if(valid){
+      if (valid) {
         let sql;
         if(update){
           console.log("updating DB");
@@ -244,17 +191,19 @@ const passedToDB = (user, timestamp, sender, linkFetched) =>{
           ON DUPLICATE KEY UPDATE link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})`;
           console.log(sql);
         }
-        connection.query(sql, (err, results) =>{
+        connection.query(sql, (err, results) => {
           if (err) {
             return console.error(err);
           } else {
-            return console.log("successfully added link");
+            return console.log(
+              "sendUnsubLinkToDB: unsubscription link sent to DB"
+            );
           }
         });
       }
     }
   });
-}
+};
 
 /**
  * Return an array of email content
@@ -301,63 +250,133 @@ router.post("/get_token", (req, res) => {
   res.send({ status: "SUCCUSS" });
 });
 
+router.get("/persistUnsubscribe", (req, res) => {
+  const vendor = req.query["vendor"]; 
+  const CURRENT_TIMESTAMP = { toSqlString: function() { return 'CURRENT_TIMESTAMP()'; } };
+  const sql = mysql.format('UPDATE all_links SET unsubscribed = ?, last_modified = ? WHERE vendor = ?', [1, CURRENT_TIMESTAMP, vendor]);
+  // const timeNow = new Date();
+  // const updateSql = `UPDATE all_links SET unsubscribed=1 WHERE USER="${current_user}" AND vendor="${vendor}"`;
+
+  connection.query(sql, (err, results) => {
+    try {
+      res.sendStatus(200);
+    } catch (err) {
+      console.log("/persistUnsubscribe/", err)
+      res.sendStatus(500)
+    }
+  });
+})
+
 router.get("/manage_subscription/", (req, res) => {
-    console.log("manage Sub is called");
-    console.log(`userEmail is ${userEmail}`)
-    let promise = new Promise(function(resolve, reject){
-      let valid = false;
-      // while(! valid){
-        console.log("Checking userEmail: ", userEmail, valid);
-        setTimeout(function(){
-          if (typeof userEmail != 'undefined') valid = true;
-        }, 10000);
-      // };
-      resolve(userEmail);        
-    });
+  const sql = `SELECT * FROM all_links WHERE user="${userEmail}"`;
+  const fullSql =
+    Object.keys(req.query).length == 0
+      ? sql + ` AND unsubscribed=0`
+      : sql + ` AND unsubscribed=1`;
+  console.log(sql);
+  connection.query(fullSql, (err, results) => {
+    const subtable = {};
+    if (err) {
+      return console.error(err);
+    } else {
+      results.forEach(item => {
+        const date = JSON.stringify(item.last_modified)
+          .split("T")[0]
+          .slice(1);
+        subtable[item.vendor] = { url: item.link, date: date };
+      });
+    }
 
-    promise.then(function(value){
-      sql = `select * from all_links where user="${userEmail}" and unsubscribed = 0`
-      console.log("Looking for subscriptions")
-      connection.query(sql, (err, results) =>{
-        let subtable = {};
-        if(err){return console.log(err)}
-        else{
-          for(let i = 0; i < results.length; i++){
-            // console.log("adding subscription");
-            item = results[i]
-            subtable[item.vendor] = item.link
-          }
-        }
-    
-        try {
-          console.log("returning data from db")
-          res.status(200).send(JSON.stringify(subtable));
-        } catch (err) {
-          res.status(400).json({
-            message: "Error fetching subscriptions.",
-            err
-          });
-          res.send();
-        }
-      }
-    )
-  })
-
+    try {
+      res.status(200).send(JSON.stringify(subtable));
+    } catch (err) {
+      res.status(400).json({
+        message: "Error fetching subscriptions.",
+        err
+      });
+      res.send();
+    }
+  });
 });
 
-router.post("/unsubscribe", (req,res) => {
-  const link = req.body.link;
-  try {
-    axios(link).then(response => {
-      const html = response.data;
-      console.log(html)
-    })
-  } catch (err) {
-      console.log("/unsubscribe" + err)
-  }
+const oneClickUnsub = url => {
+  var debugArr = [];
+  const nightmare = Nightmare({
+    openDevTools: {
+      mode: "detach"
+    },
 
-  sql = `update all_links set unsubscribed = 1 where link = "${link}"`
-})
+    show: false
+  });
+
+  return new Promise(resolve => {
+    nightmare
+      .goto(url)
+      .evaluate(debugArr => {
+        var buttons = document.getElementsByTagName("button");
+        var inputs = document.getElementsByTagName("input");
+
+        function checkKeywords(string) {
+          var keywords = ["unsubscribe", "confirm"];
+          var returnVal = false;
+          for (keyword of keywords) {
+            returnVal = string.toLowerCase().includes(keyword) || returnVal;
+          }
+          return returnVal;
+        }
+
+        function decide(elements) {
+          for (element of elements) {
+            if (
+              checkKeywords(element.innerHTML) ||
+              checkKeywords(element.value)
+            ) {
+              element.className += " unsubscribe-click-object";
+            }
+            debugArr.push({
+              class: element.className,
+              name: element.name,
+              html: element.innerHTML
+            });
+          }
+        }
+
+        decide(buttons);
+        decide(inputs);
+
+        return debugArr;
+      }, debugArr)
+      .click(".unsubscribe-click-object")
+      .end()
+      .then(debugArr => {
+        //debugArray only works when .click() line above is commented out
+        console.log("oneClickUnsub() Success");
+        resolve(true);
+      })
+      .catch(error => {
+        console.log("oneClickUnsub() One-click option unavailable");
+        nightmare.end();
+        resolve(false);
+      });
+  });
+};
+
+router.post("/unsubscribe", async (req, res) => {
+  const url = req.body.link;
+  console.log("/unsubscribe called to url: " + url);
+  try {
+    await oneClickUnsub(url).then(response => {
+      if (response) {
+        res.send({status: "SUCCESS"})
+      } else {
+        res.send({status: "ERROR"})
+      }
+      console.log("/unsubscribe " + response);
+    });
+  } catch (err) {
+    console.log("/unsubscribe " + err);
+  }
+});
 
 app.listen(4000, () => {
   console.log("ESM Server listening on port 4000");

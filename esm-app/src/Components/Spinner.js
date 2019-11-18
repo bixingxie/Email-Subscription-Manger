@@ -11,7 +11,7 @@ const useStyles = makeStyles(theme => ({
     },
   }));
   
-export function MaterialUISpinner() {
+export function Spinner() {
 const classes = useStyles();
 
 return (

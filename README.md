@@ -1,36 +1,37 @@
 # Email-Subscription-Manger
-ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. ESM helps to clean the user's cluttered email inbox. 
+ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. ESM helps to clean the user's cluttered email inbox.
 
 
 
-## State of the Program 
+## State of the Program
 
-**Finished:** 
+**Finished:**
 
-1. Authenticate the user via Gmail API on the frontend. 
-2. Pass the authorization token object to the backend (Node.JS). 
-3. Read a list of user emails in HTML format in the backend. 
-4. Parsing and grouping subscription emails. 
-5. Displaying parsed emails on the frontend. 
+1. Authenticate the user via Gmail API on the frontend.
+2. Pass the authorization token object to the backend (Node.JS).
+3. Read a list of user emails in HTML format in the backend.
+4. Parsing and grouping subscription emails.
+5. Displaying parsed emails on the frontend.
+6. 1-Click Unsubscribe
 
-**To do**: 
+**To do**:
 
 1. Persistant storage (MySQL)
-2. Better UI 
-3. 1-Click Unsubscribe 
+2. Better UI
+
 4. Add Popular Subscriptions
 
-## Dependencies 
+## Dependencies
 
 1. Npm
 
     `brew install npm`
 
-2. Yarn 
+2. Yarn
 
    `brew install yarn`
 
-3. Express, MySQL, Cors 
+3. Express, MySQL, Cors
 
    `yarnpkg add express mysql cors`
 
@@ -42,9 +43,9 @@ ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. E
 
 
 
-## Running the App	
+## Running the App
 
-### Backend 
+### Backend
 
 `nodemon index.js`
 
@@ -52,12 +53,12 @@ ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. E
 
 `yarnpkg start`
 
-### Databse 
+### Databse
 
 **Recommended**: running phpMyAdmin at `localhost:3306`
 
 I'm using mysql 5.6
-Create a user ESMUser with password ESMPassword in mysql. It can be achieved by "add a new user" link on phpmyadmin under the Privileges tab, or by running 
+Create a user ESMUser with password ESMPassword in mysql. It can be achieved by "add a new user" link on phpmyadmin under the Privileges tab, or by running
 SET PASSWORD for 'ESMUser'@'localhost' = password('ESMPassword')
 in MySQL console.
 We need privileges Select, Insert, Create, Update
@@ -65,11 +66,13 @@ We need privileges Select, Insert, Create, Update
 Then we will create a database EmailSubscriptionManager and a table all_links
 
 CREATE DATABASE EmailSubscriptionManager;
-CREATE TABLE all_links (user VARCHAR(100) NOT NULL, vendor VARCHAR(300) NOT NULL, link VARCHAR(1000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor)); 
+CREATE TABLE all_links (user VARCHAR(100) NOT NULL, vendor VARCHAR(300) NOT NULL, link VARCHAR(1000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
+
+## One-Click Unsubscribe functionality:
+Currently looks for buttons with keyword Unsubscribe and clicks on it.
 
 
-
-## Credits 
+## Credits
 
 * **Bixing Xie** - (https://github.com/bixingxie)
 * **Bronson Lee** - (https://github.com/bkl263)
