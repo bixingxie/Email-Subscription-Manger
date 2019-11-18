@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import { UnsubscribeButton } from "./UnsubscribeButton";
 import Table from "@material-ui/core/Table";
@@ -65,7 +65,7 @@ export function TableContent(props) {
             </TableCell>
             <TableCell>{key}</TableCell>
             <TableCell>
-              <UnsubscribeButton link={props.data[key]["url"]}></UnsubscribeButton>
+              <UnsubscribeButton vendor={key} link={props.data[key]["url"]} onClick={props.handlesUnsubscribe}></UnsubscribeButton>
             </TableCell>
           </TableRow>
         ))}

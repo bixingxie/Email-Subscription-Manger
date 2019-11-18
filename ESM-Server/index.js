@@ -18,7 +18,7 @@ const CLIENT_ID =
 const connection = mysql.createConnection({
   host: "localhost",
   user: "ESMUser",
-  port: "3306",
+  port: "8889",
   password: "ESMPassword",
   database: "EmailSubscriptionManager"
 });
@@ -37,7 +37,7 @@ app.use("/", router);
 
 //list of cached values for development before they are moved to database
 let subscription = {};
-let current_user = "md3837";
+let current_user = "bx357";
 
 /**
  * Get number of emails under a particular label.
@@ -54,7 +54,7 @@ const getNumberOfEmails = (auth, labelID) => {
     .then(response => {
       // console.log("Message total: ", response.data.messagesTotal);
     })
-    .catch(err => {
+    .catch(err => { 
       // console.log(err);
     });
 };
@@ -238,7 +238,7 @@ router.post("/get_token", (req, res) => {
 
 router.get("/manage_subscription/", (req, res) => {
   const sql = `SELECT * FROM all_links WHERE user="${current_user}"`
-  const fullSql = Object.keys(req.query).length == 0 ? sql : sql+` AND unsubscribed=1`
+  const fullSql = Object.keys(req.query).length == 0 ? (sql + ` AND unsubscribed=0`): (sql+` AND unsubscribed=1`)
 
   connection.query(fullSql, (err, results) => {
     const subtable = {};
@@ -263,12 +263,14 @@ router.get("/manage_subscription/", (req, res) => {
   });
 });
 
+
 const oneClickUnsub = url => {
   var debugArr = [];
   const nightmare = Nightmare(
     { openDevTools: {
       mode: 'detach'
     },
+
     show: false })
 
   return new Promise(resolve => {
@@ -285,7 +287,9 @@ const oneClickUnsub = url => {
             returnVal = (string.toLowerCase().includes(keyword) || returnVal)
           }
           return returnVal
+
         }
+
 
         function decide(elements) {
           for (element of elements) {
@@ -293,8 +297,10 @@ const oneClickUnsub = url => {
               element.className += " unsubscribe-click-object"
             }
             debugArr.push({class: element.className, name: element.name, html: element.innerHTML})
+
           }
         }
+
 
         decide(buttons)
         decide(inputs)

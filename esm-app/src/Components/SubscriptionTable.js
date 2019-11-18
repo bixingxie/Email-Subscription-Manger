@@ -11,6 +11,27 @@ export class SubscriptionTable extends React.Component {
     };
   }
 
+  handlesUnsubscribe = vendor =>  {
+    fetch("http://localhost:4000/unsubscribe/", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        link: this.state.data[vendor]["url"]
+      })
+    })
+    .then((response) => {
+      if (response.status === 200) {
+        const {[vendor]: value, ...newData} = this.state.data
+        this.setState({data: newData})
+      } else {
+        console.log("error unsubbing")
+      }
+    })
+  }
+
   componentDidMount() {
     fetch("http://localhost:4000/manage_subscription/", {
       headers: {
@@ -28,7 +49,7 @@ export class SubscriptionTable extends React.Component {
 
     if (isLoaded) {
       content = (
-        <TableContent data={this.state.data}/>
+        <TableContent data={this.state.data} handlesUnsubscribe={this.handlesUnsubscribe}/>
       );
     } else {
       content = (

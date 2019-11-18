@@ -7,11 +7,12 @@ export class UnsubbedTable extends React.Component {
     super();
     this.state = {
       data: null,
-      loaded: false
+      loaded: false, 
+      refresh: null
     };
   }
 
-  componentDidMount() {
+  fetchUnsubbedEmails = () => {
     fetch("http://localhost:4000/manage_subscription/?unsub=1", {
       headers: {
         Accept: "application/json",
@@ -19,7 +20,18 @@ export class UnsubbedTable extends React.Component {
       }
     })
       .then(response => response.json())
-      .then(data => this.setState({ data: data, loaded: true }));
+      .then(data => this.setState({ data: data, loaded: true}));
+  }
+
+  componentDidMount() {
+    this.fetchUnsubbedEmails()
+  }
+
+  componentWillReceiveProps(props) {
+    const { refresh } = this.props;
+    if (props.refresh !== refresh) {
+      this.fetchUnsubbedEmails()
+    }
   }
 
   render() {
