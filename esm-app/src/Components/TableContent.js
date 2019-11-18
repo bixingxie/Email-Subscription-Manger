@@ -65,7 +65,12 @@ export function TableContent(props) {
             </TableCell>
             <TableCell>{key}</TableCell>
             <TableCell>
-              <UnsubscribeButton vendor={key} link={props.data[key]["url"]} onClick={props.handlesUnsubscribe}></UnsubscribeButton>
+              <UnsubscribeButton 
+                vendor={key} 
+                link={props.data[key]["url"]} 
+                onClick={props.handlesUnsubscribe} 
+                unsubInProgress={props.unsubInProgress}>
+              </UnsubscribeButton>
             </TableCell>
           </TableRow>
         ))}
