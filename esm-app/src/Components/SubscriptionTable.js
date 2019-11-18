@@ -32,8 +32,9 @@ export class SubscriptionTable extends React.Component {
         link: this.state.data[vendor]["url"]
       })
     })
+    .then(response => response.json())
     .then((response) => {
-      if (response.status === 200) {
+      if (response.status === "SUCCESS") {
         const {[vendor]: value, ...newData} = this.state.data
         this.setState({data: newData})
         this.persistUnsubscribeToDB(vendor)

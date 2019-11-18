@@ -238,9 +238,12 @@ router.post("/get_token", (req, res) => {
 
 router.get("/persistUnsubscribe", (req, res) => {
   const vendor = req.query["vendor"]; 
-  const updateSql = `UPDATE all_links SET unsubscribed=1 WHERE USER="${current_user}" AND vendor="${vendor}"`;
+  const CURRENT_TIMESTAMP = { toSqlString: function() { return 'CURRENT_TIMESTAMP()'; } };
+  const sql = mysql.format('UPDATE all_links SET unsubscribed = ?, last_modified = ? WHERE vendor = ?', [1, CURRENT_TIMESTAMP, vendor]);
+  // const timeNow = new Date();
+  // const updateSql = `UPDATE all_links SET unsubscribed=1 WHERE USER="${current_user}" AND vendor="${vendor}"`;
 
-  connection.query(updateSql, (err, results) => {
+  connection.query(sql, (err, results) => {
     try {
       res.sendStatus(200);
     } catch (err) {
@@ -333,7 +336,7 @@ const oneClickUnsub = url => {
       .end()
       .then(debugArr => {
         //debugArray only works when .click() line above is commented out
-        console.log("oneClickUnsub() Sucuess");
+        console.log("oneClickUnsub() Success");
         resolve(true);
       })
       .catch(error => {
@@ -349,8 +352,12 @@ router.post("/unsubscribe", async (req, res) => {
   console.log("/unsubscribe called to url: " + url);
   try {
     await oneClickUnsub(url).then(response => {
+      if (response) {
+        res.send({status: "SUCCESS"})
+      } else {
+        res.send({status: "ERROR"})
+      }
       console.log("/unsubscribe " + response);
-      res.sendStatus(200);
     });
   } catch (err) {
     console.log("/unsubscribe " + err);
