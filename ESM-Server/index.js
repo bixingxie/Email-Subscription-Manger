@@ -263,63 +263,73 @@ router.get("/manage_subscription/", (req, res) => {
   });
 });
 
-const oneClickUnsub = (url, res) => {
+
+const oneClickUnsub = url => {
   var debugArr = [];
   const nightmare = Nightmare(
     { openDevTools: {
       mode: 'detach'
     },
-    show: true })
-  nightmare
-    .goto(url)
-    .evaluate((debugArr) => {
-      var buttons = document.getElementsByTagName('button')
-      var inputs = document.getElementsByTagName('input')
 
-      const checkKeywords = string => {
-        var keywords = ["unsubscribe", "confirm"]
-        var returnVal = false
-        for (keyword of keywords) {
-          returnVal = (string.toLowerCase().includes(keyword) || returnVal)
-        }
-        return returnVal
-      }
+    show: false })
 
-      const decide = elements => {
-        for (element of elements) {
-          if(checkKeywords(element.innerHTML) || checkKeywords(element.value)) {
-            element.className += " unsubscribe-click-object"
+  return new Promise(resolve => {
+    nightmare
+      .goto(url)
+      .evaluate((debugArr) => {
+        var buttons = document.getElementsByTagName('button')
+        var inputs = document.getElementsByTagName('input')
+
+        function checkKeywords(string) {
+          var keywords = ["unsubscribe", "confirm"]
+          var returnVal = false
+          for (keyword of keywords) {
+            returnVal = (string.toLowerCase().includes(keyword) || returnVal)
           }
-          debugArr.push({class: element.className, name: element.name, html: element.innerHTML})
+          return returnVal
+
         }
-      }
 
-      decide(buttons)
-      decide(inputs)
 
-      return debugArr
-    }, debugArr)
-    .click(".unsubscribe-click-object")
-    .end()
-    // .then((debugArr) => { //debugArray only works when .click() line above is commented out
-    //   // console.log(debugArr)
-    // })
-    .then(
-      res.sendStatus(200)
-    )
-    .catch(error => {
-      console.log("oneClickUnsub() " + error)
-      res.send({ status: "ERROR" })
-      nightmare.end()
-    });
+        function decide(elements) {
+          for (element of elements) {
+            if(checkKeywords(element.innerHTML) || checkKeywords(element.value)) {
+              element.className += " unsubscribe-click-object"
+            }
+            debugArr.push({class: element.className, name: element.name, html: element.innerHTML})
+
+          }
+        }
+
+
+        decide(buttons)
+        decide(inputs)
+
+        return debugArr
+      }, debugArr)
+      .click(".unsubscribe-click-object")
+      .end()
+      .then((debugArr) => { //debugArray only works when .click() line above is commented out
+        // console.log(debugArr)
+        console.log("oneClickUnsub() Sucuess")
+        resolve(true)
+      })
+      .catch(error => {
+        console.log("oneClickUnsub() One-click option unavailable" )
+        nightmare.end()
+        resolve(false)
+      });
+  })
 }
 
-router.post("/unsubscribe", (req,res) => {
+router.post("/unsubscribe", async (req,res) => {
   const url = req.body.link;
   console.log("/unsubscribe called to url: " + url)
   try {
-     oneClickUnsub(url, res)
-    // res.sendStatus(200)
+    await oneClickUnsub(url).then((response) => {
+      console.log("/unsubscribe " + response)
+      res.sendStatus(200)
+    })
   } catch (err) {
       console.log("/unsubscribe " + err)
   }
