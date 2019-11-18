@@ -1,10 +1,11 @@
 import React from "react";
-import { HomePageBody } from "./HomePageBody"
+import { HomePageBody } from "./HomePageBody";
 import { GoogleLogin } from "react-google-login";
 import { GoogleLogout } from "react-google-login";
 import localStorage from "local-storage";
 import Paper from "@material-ui/core/Paper";
 import Card from "@material-ui/core/Card";
+import Grid from "@material-ui/core/Grid";
 import HomePageHeader from "./HomePageHeader";
 
 // Given by Google API
@@ -36,7 +37,7 @@ export class HomePage extends React.Component {
         tokenObj: response.tokenObj
       },
       () => {
-        console.log(this.state.tokenObj)
+        console.log(this.state.tokenObj);
         this.sendUserToken();
         localStorage.set(
           "userInfo",
@@ -52,14 +53,14 @@ export class HomePage extends React.Component {
 
   // Send user token to backend
   sendUserToken = () => {
-    console.log(this.state.tokenObj)
+    console.log(this.state.tokenObj);
     fetch("http://localhost:4000/get_token/", {
       method: "POST",
       headers: {
         // Accept: "application/json",
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(this.state.tokenObj),
+      body: JSON.stringify(this.state.tokenObj)
     });
   };
 
@@ -103,13 +104,21 @@ export class HomePage extends React.Component {
         <HomePageHeader
           userName={this.state.userName ? this.state.userName : "please log in"}
         />
-        
-        <Card>
-          {this.state.isAuthenticated ? <HomePageBody /> : <hr />}
-        </Card>
 
-        <Card>{logInOrOutButton}</Card>
+        <Card>{this.state.isAuthenticated ? <HomePageBody /> : <hr />}</Card>
 
+        <Grid
+          container
+          spacing={0}
+          direction="column"
+          alignItems="center"
+          justify="center"
+          style={{ minHeight: "10vh" }}
+        >
+          <Grid item xs={3}>
+            <Card>{logInOrOutButton}</Card>
+          </Grid>
+        </Grid>
       </Paper>
     );
   }
