@@ -7,7 +7,8 @@ export class SubscriptionTable extends React.Component {
     super();
     this.state = {
       data: null,
-      loaded: false
+      loaded: false, 
+      unsubInProgress: false
     };
   }
 
@@ -22,7 +23,8 @@ export class SubscriptionTable extends React.Component {
   }
 
   handlesUnsubscribe = vendor =>  {
-    fetch("http://localhost:4000/unsubscribe/", {
+    this.setState({unsubInProgress: true}, () => {
+      fetch("http://localhost:4000/unsubscribe/", {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -31,16 +33,18 @@ export class SubscriptionTable extends React.Component {
       body: JSON.stringify({
         link: this.state.data[vendor]["url"]
       })
-    })
-    .then(response => response.json())
-    .then((response) => {
-      if (response.status === "SUCCESS") {
-        const {[vendor]: value, ...newData} = this.state.data
-        this.setState({data: newData})
-        this.persistUnsubscribeToDB(vendor)
-      } else {
-        console.log("error unsubbing")
-      }
+      })
+      .then(response => response.json())
+      .then((response) => {
+        if (response.status === "SUCCESS") {
+          const {[vendor]: value, ...newData} = this.state.data
+          this.setState({data: newData})
+          this.persistUnsubscribeToDB(vendor)
+        } else {
+          console.log("error unsubbing")
+        }
+        this.setState({unsubInProgress: false})
+      })
     })
   }
 
@@ -58,10 +62,11 @@ export class SubscriptionTable extends React.Component {
   render() {
     const isLoaded = this.state.loaded;
     let content;
+    console.log(this.state.unsubInProgress)
 
     if (isLoaded) {
       content = (
-        <TableContent data={this.state.data} handlesUnsubscribe={this.handlesUnsubscribe}/>
+        <TableContent data={this.state.data} handlesUnsubscribe={this.handlesUnsubscribe} unsubInProgress={this.state.unsubInProgress}/>
       );
     } else {
       content = (
