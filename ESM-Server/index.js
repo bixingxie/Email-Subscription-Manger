@@ -54,7 +54,7 @@ const getNumberOfEmails = (auth, labelID) => {
     .then(response => {
       // console.log("Message total: ", response.data.messagesTotal);
     })
-    .catch(err => {
+    .catch(err => { 
       // console.log(err);
     });
 };
@@ -305,7 +305,7 @@ const oneClickUnsub = (url, res) => {
     //   // console.log(debugArr)
     // })
     .then(
-      res.send({ status: "SUCCUSS" })
+      res.sendStatus(200)
     )
     .catch(error => {
       console.log("oneClickUnsub() " + error)
@@ -319,8 +319,7 @@ router.post("/unsubscribe", (req,res) => {
   console.log("/unsubscribe called to url: " + url)
   try {
      oneClickUnsub(url, res)
-    console.log("success: ", success)
-    res.sendStatus(200)
+    // res.sendStatus(200)
   } catch (err) {
       console.log("/unsubscribe " + err)
   }

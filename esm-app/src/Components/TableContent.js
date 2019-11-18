@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import { UnsubscribeButton } from "./UnsubscribeButton";
 import Table from "@material-ui/core/Table";
@@ -19,6 +19,29 @@ const useStyles = makeStyles({
 });
 
 export function TableContent(props) {
+  const [rows, updateRows] = useState(props.data) 
+
+  const handlesUnsubscribe = vendor =>  {
+    fetch("http://localhost:4000/unsubscribe/", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        link: rows[vendor]["url"]
+      })
+    })
+    .then((response) => {
+      if (response.status === 200) {
+        const {[vendor]: value, ...newRows} = rows
+        updateRows(newRows)
+      } else {
+        console.log("error unsubbing")
+      }
+    })
+  }
+  
   const classes = useStyles();
   let tableHead;
   let tableBody;
@@ -35,13 +58,13 @@ export function TableContent(props) {
     );
     tableBody = (
       <TableBody>
-        {Object.keys(props.data).map((key, index) => (
+        {Object.keys(rows).map((key, index) => (
           <TableRow key={index}>
             <TableCell component="th" scope="row">
               {index}
             </TableCell>
             <TableCell>{key}</TableCell>
-            <TableCell>{props.data[key]["date"]}</TableCell>
+            <TableCell>{rows[key]["date"]}</TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -58,14 +81,14 @@ export function TableContent(props) {
     );
     tableBody = (
       <TableBody>
-        {Object.keys(props.data).map((key, index) => (
+        {Object.keys(rows).map((key, index) => (
           <TableRow key={index}>
             <TableCell component="th" scope="row">
               {index}
             </TableCell>
             <TableCell>{key}</TableCell>
             <TableCell>
-              <UnsubscribeButton link={props.data[key]["url"]}></UnsubscribeButton>
+              <UnsubscribeButton vendor={key} link={rows[key]["url"]} onClick={handlesUnsubscribe}></UnsubscribeButton>
             </TableCell>
           </TableRow>
         ))}
