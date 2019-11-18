@@ -70,12 +70,6 @@ export class HomePage extends React.Component {
     .then(response => (console.log(response)))
   }
 
-  componentDidMount() {
-    if (this.state.isAuthenticated) {
-      this.sendUserEmail(this.state.userEmail || JSON.parse(localStorage.get("userInfo")).userEmail)
-    }
-  }
-
   // Handles logout
   logout = () => {
     this.setState({ isAuthenticated: false, token: "", user: null }, () => {
@@ -89,6 +83,10 @@ export class HomePage extends React.Component {
 
   render() {
     let logInOrOutButton;
+
+     if (this.state.isAuthenticated) {
+      this.sendUserEmail(this.state.userEmail || JSON.parse(localStorage.get("userInfo")).userEmail)
+    }
 
     if (this.state.isAuthenticated) {
       logInOrOutButton = (

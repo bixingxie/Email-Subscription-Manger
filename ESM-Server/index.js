@@ -4,7 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cheerio = require("cheerio");
-const mysql = require('mysql');
+const mysql = require("mysql");
 const Nightmare = require("nightmare");
 
 const app = express();
@@ -113,7 +113,7 @@ const getEmailContent = (auth, emailID) => {
               text.indexOf("subscription") !== -1
             ) {
               const linkFetched = $(link).attr("href");
-              passedToDB(app.locals.userEmail, emailDate, sender, linkFetched)
+              storeToDB(app.locals.userEmail, emailDate, sender, linkFetched);
               return;
             }
           });
@@ -153,7 +153,7 @@ const storeToDB = (user, timestamp, sender, linkFetched) => {
   const sql = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
   FROM all_links WHERE user="${user}" AND vendor="${sender}"`;
 
-  connection.query(sql, (err, result) =>{
+  connection.query(sql, (err, rst) => {
     if (err) {
       return console.log(err);
     } else {
@@ -172,11 +172,11 @@ const storeToDB = (user, timestamp, sender, linkFetched) => {
       //update database
       if (valid) {
         let sql;
-        if(update){
+        if (update) {
           console.log("updating DB");
           sql = `UPDATE all_links SET link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})
           WHERE user="${user}" AND vendor="${sender}"`;
-        }else{
+        } else {
           console.log("INSERTING into DB");
           sql = `INSERT INTO all_links (user, vendor, link, unsubscribed, last_modified)
           VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp}))
@@ -242,25 +242,32 @@ router.get("/get_email", (req, res) => {
     app.locals.userEmail = req.query["email"];
     res.send({ status: "SUCCUSS" });
   } catch (e) {
-    console.log(e)
+    console.log(e);
     res.send({ status: "ERROR" });
   }
 });
 
 router.get("/persistUnsubscribe", (req, res) => {
-  const vendor = req.query["vendor"]; 
-  const CURRENT_TIMESTAMP = { toSqlString: function() { return 'CURRENT_TIMESTAMP()'; } };
-  const sql = mysql.format('UPDATE all_links SET unsubscribed = ?, last_modified = ? WHERE vendor = ?', [1, CURRENT_TIMESTAMP, vendor]);
+  const vendor = req.query["vendor"];
+  const CURRENT_TIMESTAMP = {
+    toSqlString: function() {
+      return "CURRENT_TIMESTAMP()";
+    }
+  };
+  const sql = mysql.format(
+    "UPDATE all_links SET unsubscribed = ?, last_modified = ? WHERE vendor = ?",
+    [1, CURRENT_TIMESTAMP, vendor]
+  );
 
   connection.query(sql, (err, results) => {
     try {
       res.sendStatus(200);
     } catch (err) {
-      console.log("/persistUnsubscribe/", err)
-      res.sendStatus(500)
+      console.log("/persistUnsubscribe/", err);
+      res.sendStatus(500);
     }
   });
-})
+});
 
 router.get("/manage_subscription/", (req, res) => {
   const sql = `SELECT * FROM all_links WHERE user="${app.locals.userEmail}"`;
@@ -365,9 +372,9 @@ router.post("/unsubscribe", async (req, res) => {
   try {
     await oneClickUnsub(url).then(response => {
       if (response) {
-        res.send({status: "SUCCESS"})
+        res.send({ status: "SUCCESS" });
       } else {
-        res.send({status: "ERROR"})
+        res.send({ status: "ERROR" });
       }
       console.log("/unsubscribe " + response);
     });
