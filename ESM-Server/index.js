@@ -238,7 +238,7 @@ router.post("/get_token", (req, res) => {
 
 router.get("/manage_subscription/", (req, res) => {
   const sql = `SELECT * FROM all_links WHERE user="${current_user}"`
-  const fullSql = Object.keys(req.query).length == 0 ? sql : sql+` AND unsubscribed=1`
+  const fullSql = Object.keys(req.query).length == 0 ? (sql + ` AND unsubscribed=0`): (sql+` AND unsubscribed=1`)
 
   connection.query(fullSql, (err, results) => {
     const subtable = {};

@@ -19,29 +19,6 @@ const useStyles = makeStyles({
 });
 
 export function TableContent(props) {
-  const [rows, updateRows] = useState(props.data) 
-
-  const handlesUnsubscribe = vendor =>  {
-    fetch("http://localhost:4000/unsubscribe/", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        link: rows[vendor]["url"]
-      })
-    })
-    .then((response) => {
-      if (response.status === 200) {
-        const {[vendor]: value, ...newRows} = rows
-        updateRows(newRows)
-      } else {
-        console.log("error unsubbing")
-      }
-    })
-  }
-  
   const classes = useStyles();
   let tableHead;
   let tableBody;
@@ -58,13 +35,13 @@ export function TableContent(props) {
     );
     tableBody = (
       <TableBody>
-        {Object.keys(rows).map((key, index) => (
+        {Object.keys(props.data).map((key, index) => (
           <TableRow key={index}>
             <TableCell component="th" scope="row">
               {index}
             </TableCell>
             <TableCell>{key}</TableCell>
-            <TableCell>{rows[key]["date"]}</TableCell>
+            <TableCell>{props.data[key]["date"]}</TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -81,14 +58,14 @@ export function TableContent(props) {
     );
     tableBody = (
       <TableBody>
-        {Object.keys(rows).map((key, index) => (
+        {Object.keys(props.data).map((key, index) => (
           <TableRow key={index}>
             <TableCell component="th" scope="row">
               {index}
             </TableCell>
             <TableCell>{key}</TableCell>
             <TableCell>
-              <UnsubscribeButton vendor={key} link={rows[key]["url"]} onClick={handlesUnsubscribe}></UnsubscribeButton>
+              <UnsubscribeButton vendor={key} link={props.data[key]["url"]} onClick={props.handlesUnsubscribe}></UnsubscribeButton>
             </TableCell>
           </TableRow>
         ))}

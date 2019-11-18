@@ -32,7 +32,7 @@ TabPanel.propTypes = {
         children: PropTypes.node,
         index: PropTypes.any.isRequired,
         value: PropTypes.any.isRequired,
-      };
+};
 
 function a11yProps(index) {
   return {
@@ -50,6 +50,7 @@ const useStyles = makeStyles({
 export function HomePageBody() {
   const classes = useStyles();
   const [value, setValue] = React.useState(0);
+  const [refresh, setRefresh] = React.useState(0); 
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -64,14 +65,14 @@ export function HomePageBody() {
         aria-label="icon label tabs"
       >
         <Tab icon={<EmailIcon />} label="Keep" {...a11yProps(0)} />
-        <Tab icon={<DeleteForeverIcon />} label="Unsubscribed" />
+        <Tab icon={<DeleteForeverIcon />} label="Unsubscribed" {...a11yProps(1)} onClick={()=>{setRefresh(!refresh)}}/>
         </Tabs>
 
         <TabPanel value={value} index={0}>
                 <SubscriptionTable/>
         </TabPanel>
         <TabPanel value={value} index={1}>
-                <UnsubbedTable/>
+                <UnsubbedTable refresh={refresh}/>
         </TabPanel>
     </Paper>
   );
