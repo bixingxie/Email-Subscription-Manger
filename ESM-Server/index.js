@@ -236,6 +236,20 @@ router.post("/get_token", (req, res) => {
   res.send({ status: "SUCCUSS" });
 });
 
+router.get("/persistUnsubscribe", (req, res) => {
+  const vendor = req.query["vendor"]; 
+  const updateSql = `UPDATE all_links SET unsubscribed=1 WHERE USER="${current_user}" AND vendor="${vendor}"`;
+
+  connection.query(updateSql, (err, results) => {
+    try {
+      res.sendStatus(200);
+    } catch (err) {
+      console.log("/persistUnsubscribe/", err)
+      res.sendStatus(500)
+    }
+  });
+})
+
 router.get("/manage_subscription/", (req, res) => {
   const sql = `SELECT * FROM all_links WHERE user="${current_user}"`;
   const fullSql =
@@ -319,7 +333,6 @@ const oneClickUnsub = url => {
       .end()
       .then(debugArr => {
         //debugArray only works when .click() line above is commented out
-        // console.log(debugArr)
         console.log("oneClickUnsub() Sucuess");
         resolve(true);
       })

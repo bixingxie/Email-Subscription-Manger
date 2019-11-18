@@ -11,6 +11,16 @@ export class SubscriptionTable extends React.Component {
     };
   }
 
+  persistUnsubscribeToDB = vendor => {
+    fetch(`http://localhost:4000/persistUnsubscribe/?vendor=${vendor}`, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json"
+      }
+    })
+      .then(console.log("persistUnsubscribeToDB: SUCCUESS"))
+  }
+
   handlesUnsubscribe = vendor =>  {
     fetch("http://localhost:4000/unsubscribe/", {
       method: "POST",
@@ -26,6 +36,7 @@ export class SubscriptionTable extends React.Component {
       if (response.status === 200) {
         const {[vendor]: value, ...newData} = this.state.data
         this.setState({data: newData})
+        this.persistUnsubscribeToDB(vendor)
       } else {
         console.log("error unsubbing")
       }
