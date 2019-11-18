@@ -20,7 +20,7 @@ const CLIENT_ID =
 const connection = mysql.createConnection({
   host: "localhost",
   user: "ESMUser",
-  port: "8889",
+  port: "3306",
   password: "ESMPassword",
   database: "EmailSubscriptionManager"
 });
@@ -120,7 +120,7 @@ const getEmailContent = (auth, emailID, userEmail) => {
               text.indexOf("subscription") !== -1
             ) {
               const linkFetched = $(link).attr("href");
-              passedToDB(userEmail, emailDate, sender, linkFetched)
+              storeToDB(userEmail, emailDate, sender, linkFetched)
               return;
             }
           });
@@ -153,11 +153,11 @@ function searchHeaders(headers, headerName) {
  * @param {String} sender
  * @param {String} link Link to be stored
  */
-const passedToDB = (user, timestamp, sender, linkFetched) => {
+const storeToDB = (user, timestamp, sender, linkFetched) => {
   sender = sender.replace(/"/g, "").replace(" ", "");
   const jsTimeStamp = Date.parse(timestamp) / 1000;
 
-  const sqlSelectOneLink = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
+  const sql = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
   FROM all_links WHERE user="${user}" AND vendor="${sender}"`;
   // console.log(sql)
   connection.query(sql, (err, rst) =>{
@@ -167,10 +167,10 @@ const passedToDB = (user, timestamp, sender, linkFetched) => {
       var valid = false; //if current vendor user pair is new to db
       var update = false; //if current vendor user paird needs be posted
 
-      if (result.length == 0) {
+      if (rst.length == 0) {
         valid = true;
       } else {
-        if (jsTimeStamp > result[0].last_modified) {
+        if (jsTimeStamp > rst[0].last_modified) {
           valid = true;
           update = true;
         }
@@ -183,17 +183,16 @@ const passedToDB = (user, timestamp, sender, linkFetched) => {
           console.log("updating DB");
           sql = `UPDATE all_links SET link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})
           WHERE user="${user}" AND vendor="${sender}"`;
-          console.log(sql);
         }else{
           console.log("INSERTING into DB");
           sql = `INSERT INTO all_links (user, vendor, link, unsubscribed, last_modified)
           VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp}))
           ON DUPLICATE KEY UPDATE link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})`;
-          console.log(sql);
         }
+        // console.log(sql);
         connection.query(sql, (err, results) => {
           if (err) {
-            return console.error(err);
+            // return console.error(err);
           } else {
             return console.log(
               "sendUnsubLinkToDB: unsubscription link sent to DB"
