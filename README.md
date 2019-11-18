@@ -55,7 +55,7 @@ ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. E
 
 ### Databse
 
-**Recommended**: running phpMyAdmin at `localhost:3306`
+**Recommended**: running phpMyAdmin at `localhost:8889`
 
 I'm using mysql 5.6
 Create a user ESMUser with password ESMPassword in mysql. It can be achieved by "add a new user" link on phpmyadmin under the Privileges tab, or by running

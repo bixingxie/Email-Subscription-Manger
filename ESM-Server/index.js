@@ -20,7 +20,7 @@ const CLIENT_ID =
 const connection = mysql.createConnection({
   host: "localhost",
   user: "ESMUser",
-  port: "3306",
+  port: "8889",
   password: "ESMPassword",
   database: "EmailSubscriptionManager"
 });
