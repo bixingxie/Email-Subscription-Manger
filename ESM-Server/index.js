@@ -4,7 +4,9 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cheerio = require("cheerio");
-const mysql = require("mysql");
+const mysql = require('mysql');
+const axios = require('axios');
+const fetch = require("node-fetch");
 const Nightmare = require("nightmare");
 
 const app = express();
@@ -36,8 +38,7 @@ app.use(bodyParser.urlencoded({ extended: false })); // support encoded bodies
 app.use("/", router);
 
 //list of cached values for development before they are moved to database
-let subscription = {};
-let current_user = "bx357";
+let userEmail;
 
 /**
  * Get number of emails under a particular label.
@@ -62,9 +63,10 @@ const getNumberOfEmails = (auth, labelID) => {
 /**
  * Gets a list of emails from the Gmail API.
  * @param {OAuth2Client} auth Authorization object.
+ * @param {string} userEmail Email address of current user
  * @param {function} callback Callback function to execute.
  */
-const getEmailList = (auth, callback) => {
+const getEmailList = (auth, userEmail, callback) => {
   const gmail = google.gmail({ version: "v1", auth });
   gmail.users.messages
     .list({
@@ -73,7 +75,7 @@ const getEmailList = (auth, callback) => {
       q: "unsubscribe OR subscription"
     })
     .then(response => {
-      callback(auth, response.data.messages);
+      callback(auth, response.data.messages, userEmail);
     });
 };
 
@@ -81,8 +83,9 @@ const getEmailList = (auth, callback) => {
  * Gets the email content of a particular email from the Gmail API.
  * @param {OAuth2Client} auth    Authorization object.
  * @param {string}       emailID The email ID to get.
+ * @param {String}        userEmail Email address of curr User
  */
-const getEmailContent = (auth, emailID) => {
+const getEmailContent = (auth, emailID, userEmail) => {
   const gmail = google.gmail({ version: "v1", auth });
   gmail.users.messages
     .get({
@@ -116,8 +119,9 @@ const getEmailContent = (auth, emailID) => {
               text.indexOf("subscribe") !== -1 ||
               text.indexOf("subscription") !== -1
             ) {
-              const unsubLink = $(link).attr("href");
-              sendUnsubLinkToDB(current_user, emailDate, sender, unsubLink);
+              const linkFetched = $(link).attr("href");
+              passedToDB(userEmail, emailDate, sender, linkFetched)
+              return;
             }
           });
         }
@@ -149,18 +153,19 @@ function searchHeaders(headers, headerName) {
  * @param {String} sender
  * @param {String} link Link to be stored
  */
-const sendUnsubLinkToDB = (user, timestamp, sender, linkFetched) => {
+const passedToDB = (user, timestamp, sender, linkFetched) => {
   sender = sender.replace(/"/g, "").replace(" ", "");
   const jsTimeStamp = Date.parse(timestamp) / 1000;
 
   const sqlSelectOneLink = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
   FROM all_links WHERE user="${user}" AND vendor="${sender}"`;
-  connection.query(sqlSelectOneLink, (err, result) => {
+  // console.log(sql)
+  connection.query(sql, (err, rst) =>{
     if (err) {
       return console.log(err);
     } else {
-      let valid = false;
-      let update = false;
+      var valid = false; //if current vendor user pair is new to db
+      var update = false; //if current vendor user paird needs be posted
 
       if (result.length == 0) {
         valid = true;
@@ -174,13 +179,17 @@ const sendUnsubLinkToDB = (user, timestamp, sender, linkFetched) => {
       //update database
       if (valid) {
         let sql;
-        if (update) {
+        if(update){
+          console.log("updating DB");
           sql = `UPDATE all_links SET link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})
           WHERE user="${user}" AND vendor="${sender}"`;
-        } else {
+          console.log(sql);
+        }else{
+          console.log("INSERTING into DB");
           sql = `INSERT INTO all_links (user, vendor, link, unsubscribed, last_modified)
           VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp}))
           ON DUPLICATE KEY UPDATE link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})`;
+          console.log(sql);
         }
         connection.query(sql, (err, results) => {
           if (err) {
@@ -200,9 +209,10 @@ const sendUnsubLinkToDB = (user, timestamp, sender, linkFetched) => {
  * Return an array of email content
  * @param {OAuth2Client} auth      Authorization object.
  * @param {Array}        emailList A list of email to print.
+ * @param {String}        userEmail Email address of curr User
  */
-const printEmailList = (auth, emailList) => {
-  return emailList.map(emailObj => getEmailContent(auth, emailObj.id));
+const printEmailList = (auth, emailList, userEmail) => {
+  return emailList.map(emailObj => getEmailContent(auth, emailObj.id, userEmail));
 };
 
 /**
@@ -216,6 +226,7 @@ const initoAuthObj = tokenObj => {
     CLIENT_SECRET,
     REDIRECT_URLS[0]
   );
+  console.log(tokenObj);
   oAuth.setCredentials(tokenObj);
   return oAuth;
 };
@@ -225,10 +236,13 @@ router.get("/", (req, res) => {
 });
 
 router.post("/get_token", (req, res) => {
+  console.log("inside getToken")
   try {
-    const tokenObj = req.body;
+    const tokenObj = req.body[0];
+    userEmail = req.body[1];
+    console.log("UserEmail Set", userEmail)
     const oAuth = initoAuthObj(tokenObj);
-    getEmailList(oAuth, printEmailList);
+    getEmailList(oAuth, userEmail, printEmailList);
     getNumberOfEmails(oAuth, "INBOX");
   } catch (e) {
     res.send({ status: "ERROR" });
@@ -254,12 +268,12 @@ router.get("/persistUnsubscribe", (req, res) => {
 })
 
 router.get("/manage_subscription/", (req, res) => {
-  const sql = `SELECT * FROM all_links WHERE user="${current_user}"`;
+  const sql = `SELECT * FROM all_links WHERE user="${userEmail}"`;
   const fullSql =
     Object.keys(req.query).length == 0
       ? sql + ` AND unsubscribed=0`
       : sql + ` AND unsubscribed=1`;
-
+  console.log(sql);
   connection.query(fullSql, (err, results) => {
     const subtable = {};
     if (err) {
