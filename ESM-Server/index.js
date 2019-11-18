@@ -5,8 +5,6 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const cheerio = require("cheerio");
 const mysql = require('mysql');
-const axios = require('axios');
-const fetch = require("node-fetch");
 const Nightmare = require("nightmare");
 
 const app = express();
@@ -20,7 +18,7 @@ const CLIENT_ID =
 const connection = mysql.createConnection({
   host: "localhost",
   user: "ESMUser",
-  port: "3306",
+  port: "8889",
   password: "ESMPassword",
   database: "EmailSubscriptionManager"
 });
@@ -36,9 +34,6 @@ app.use(cors());
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: false })); // support encoded bodies
 app.use("/", router);
-
-//list of cached values for development before they are moved to database
-let userEmail;
 
 /**
  * Get number of emails under a particular label.
@@ -63,10 +58,9 @@ const getNumberOfEmails = (auth, labelID) => {
 /**
  * Gets a list of emails from the Gmail API.
  * @param {OAuth2Client} auth Authorization object.
- * @param {string} userEmail Email address of current user
  * @param {function} callback Callback function to execute.
  */
-const getEmailList = (auth, userEmail, callback) => {
+const getEmailList = (auth, callback) => {
   const gmail = google.gmail({ version: "v1", auth });
   gmail.users.messages
     .list({
@@ -75,7 +69,7 @@ const getEmailList = (auth, userEmail, callback) => {
       q: "unsubscribe OR subscription"
     })
     .then(response => {
-      callback(auth, response.data.messages, userEmail);
+      callback(auth, response.data.messages);
     });
 };
 
@@ -83,9 +77,8 @@ const getEmailList = (auth, userEmail, callback) => {
  * Gets the email content of a particular email from the Gmail API.
  * @param {OAuth2Client} auth    Authorization object.
  * @param {string}       emailID The email ID to get.
- * @param {String}        userEmail Email address of curr User
  */
-const getEmailContent = (auth, emailID, userEmail) => {
+const getEmailContent = (auth, emailID) => {
   const gmail = google.gmail({ version: "v1", auth });
   gmail.users.messages
     .get({
@@ -120,7 +113,7 @@ const getEmailContent = (auth, emailID, userEmail) => {
               text.indexOf("subscription") !== -1
             ) {
               const linkFetched = $(link).attr("href");
-              storeToDB(userEmail, emailDate, sender, linkFetched)
+              passedToDB(app.locals.userEmail, emailDate, sender, linkFetched)
               return;
             }
           });
@@ -159,8 +152,8 @@ const storeToDB = (user, timestamp, sender, linkFetched) => {
 
   const sql = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
   FROM all_links WHERE user="${user}" AND vendor="${sender}"`;
-  // console.log(sql)
-  connection.query(sql, (err, rst) =>{
+
+  connection.query(sql, (err, result) =>{
     if (err) {
       return console.log(err);
     } else {
@@ -208,10 +201,9 @@ const storeToDB = (user, timestamp, sender, linkFetched) => {
  * Return an array of email content
  * @param {OAuth2Client} auth      Authorization object.
  * @param {Array}        emailList A list of email to print.
- * @param {String}        userEmail Email address of curr User
  */
-const printEmailList = (auth, emailList, userEmail) => {
-  return emailList.map(emailObj => getEmailContent(auth, emailObj.id, userEmail));
+const printEmailList = (auth, emailList) => {
+  return emailList.map(emailObj => getEmailContent(auth, emailObj.id));
 };
 
 /**
@@ -225,7 +217,6 @@ const initoAuthObj = tokenObj => {
     CLIENT_SECRET,
     REDIRECT_URLS[0]
   );
-  console.log(tokenObj);
   oAuth.setCredentials(tokenObj);
   return oAuth;
 };
@@ -235,26 +226,31 @@ router.get("/", (req, res) => {
 });
 
 router.post("/get_token", (req, res) => {
-  console.log("inside getToken")
   try {
-    const tokenObj = req.body[0];
-    userEmail = req.body[1];
-    console.log("UserEmail Set", userEmail)
-    const oAuth = initoAuthObj(tokenObj);
-    getEmailList(oAuth, userEmail, printEmailList);
-    getNumberOfEmails(oAuth, "INBOX");
+    const tokenObj = req.body;
+    app.locals.oAuth = initoAuthObj(tokenObj);
+    getEmailList(app.locals.oAuth, printEmailList);
+    getNumberOfEmails(app.locals.oAuth, "INBOX");
+    res.send({ status: "SUCCUSS" });
   } catch (e) {
     res.send({ status: "ERROR" });
   }
-  res.send({ status: "SUCCUSS" });
+});
+
+router.get("/get_email", (req, res) => {
+  try {
+    app.locals.userEmail = req.query["email"];
+    res.send({ status: "SUCCUSS" });
+  } catch (e) {
+    console.log(e)
+    res.send({ status: "ERROR" });
+  }
 });
 
 router.get("/persistUnsubscribe", (req, res) => {
   const vendor = req.query["vendor"]; 
   const CURRENT_TIMESTAMP = { toSqlString: function() { return 'CURRENT_TIMESTAMP()'; } };
   const sql = mysql.format('UPDATE all_links SET unsubscribed = ?, last_modified = ? WHERE vendor = ?', [1, CURRENT_TIMESTAMP, vendor]);
-  // const timeNow = new Date();
-  // const updateSql = `UPDATE all_links SET unsubscribed=1 WHERE USER="${current_user}" AND vendor="${vendor}"`;
 
   connection.query(sql, (err, results) => {
     try {
@@ -267,12 +263,15 @@ router.get("/persistUnsubscribe", (req, res) => {
 })
 
 router.get("/manage_subscription/", (req, res) => {
-  const sql = `SELECT * FROM all_links WHERE user="${userEmail}"`;
+  const sql = `SELECT * FROM all_links WHERE user="${app.locals.userEmail}"`;
+  // const sql = `SELECT * FROM all_links WHERE user="bx357"`;
   const fullSql =
     Object.keys(req.query).length == 0
       ? sql + ` AND unsubscribed=0`
       : sql + ` AND unsubscribed=1`;
+
   console.log(sql);
+
   connection.query(fullSql, (err, results) => {
     const subtable = {};
     if (err) {

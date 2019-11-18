@@ -37,7 +37,6 @@ export class HomePage extends React.Component {
         tokenObj: response.tokenObj
       },
       () => {
-        console.log(this.state.tokenObj);
         this.sendUserToken();
         localStorage.set(
           "userInfo",
@@ -51,18 +50,31 @@ export class HomePage extends React.Component {
     );
   };
 
-  // Send user token to backend
   sendUserToken = () => {
-    console.log(this.state.tokenObj);
     fetch("http://localhost:4000/get_token/", {
       method: "POST",
       headers: {
-        // Accept: "application/json",
         "Content-Type": "application/json"
       },
-      body: JSON.stringify([this.state.tokenObj, this.state.userEmail]),
+      body: JSON.stringify(this.state.tokenObj),
     });
   };
+
+  sendUserEmail = (email) => {
+    fetch(`http://localhost:4000/get_email/?email=${email}`, {
+      headers: {
+        Accept: "application/jsosn",
+        "Content-Type": "application/json"
+      }
+    })
+    .then(response => (console.log(response)))
+  }
+
+  componentDidMount() {
+    if (this.state.isAuthenticated) {
+      this.sendUserEmail(this.state.userEmail || JSON.parse(localStorage.get("userInfo")).userEmail)
+    }
+  }
 
   // Handles logout
   logout = () => {
