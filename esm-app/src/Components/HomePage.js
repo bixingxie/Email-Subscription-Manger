@@ -6,6 +6,7 @@ import localStorage from "local-storage";
 import Paper from "@material-ui/core/Paper";
 import Card from "@material-ui/core/Card";
 import Grid from "@material-ui/core/Grid";
+import {Spinner} from "./Spinner"
 import HomePageHeader from "./HomePageHeader";
 
 // Given by Google API
@@ -23,7 +24,8 @@ export class HomePage extends React.Component {
       userName: userInfo ? userInfo.userName : null,
       tokenObj: userInfo ? userInfo.tokenObj : null,
       token: "",
-      subscriptions: {}
+      subscriptions: {}, 
+      fetchDone: null
     };
   }
 
@@ -34,7 +36,8 @@ export class HomePage extends React.Component {
         token: response.tokenId,
         userEmail: response.profileObj.email,
         userName: response.profileObj.name,
-        tokenObj: response.tokenObj
+        tokenObj: response.tokenObj, 
+        fetchDone: false
       },
       () => {
         this.sendUserToken();
@@ -57,7 +60,13 @@ export class HomePage extends React.Component {
         "Content-Type": "application/json"
       },
       body: JSON.stringify(this.state.tokenObj),
-    });
+    })
+    .then((res) => {
+      this.setState({fetchDone: true})
+    })
+    .catch(err => {
+      console.log(err)
+    })
   };
 
   sendUserEmail = (email) => {
@@ -115,7 +124,9 @@ export class HomePage extends React.Component {
           userName={this.state.userName ? this.state.userName : "please log in"}
         />
 
-        <Card>{this.state.isAuthenticated ? <HomePageBody /> : <hr />}</Card>
+        <Card>{this.state.isAuthenticated 
+          ? (this.state.fetchDone === false ? <Spinner/> : <HomePageBody /> )
+          : <hr />}</Card>
 
         <Grid
           container
