@@ -68,8 +68,9 @@ Then we will create a database EmailSubscriptionManager and a table all_links
 CREATE DATABASE EmailSubscriptionManager;
 CREATE TABLE all_links (user VARCHAR(100) NOT NULL, vendor VARCHAR(300) NOT NULL, link VARCHAR(1000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
 
-## One-Click Unsubscribe functionality:
-Currently looks for buttons with keyword Unsubscribe and clicks on it.
+## One-Click™ Unsubscribe functionality:
+Currently looks for html buttons or inputs with keywords unsubscribe, confirm, or yes and clicks on it. If it cannot find a matching keyword it will notify
+that One-Click™ functionality is unavailable.
 
 
 ## Credits

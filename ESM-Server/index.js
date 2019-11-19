@@ -18,7 +18,7 @@ const CLIENT_ID =
 const connection = mysql.createConnection({
   host: "localhost",
   user: "ESMUser",
-  port: "8889",
+  port: "3306",
   password: "ESMPassword",
   database: "EmailSubscriptionManager"
 });
@@ -305,24 +305,22 @@ router.get("/manage_subscription/", (req, res) => {
 });
 
 const oneClickUnsub = url => {
-  var debugArr = [];
   const nightmare = Nightmare({
     openDevTools: {
       mode: "detach"
     },
-
     show: false
   });
 
   return new Promise(resolve => {
     nightmare
       .goto(url)
-      .evaluate(debugArr => {
+      .evaluate(() => {
         var buttons = document.getElementsByTagName("button");
         var inputs = document.getElementsByTagName("input");
 
         function checkKeywords(string) {
-          var keywords = ["unsubscribe", "confirm"];
+          var keywords = ["unsubscribe", "confirm", "yes"];
           var returnVal = false;
           for (keyword of keywords) {
             returnVal = string.toLowerCase().includes(keyword) || returnVal;
@@ -338,23 +336,17 @@ const oneClickUnsub = url => {
             ) {
               element.className += " unsubscribe-click-object";
             }
-            debugArr.push({
-              class: element.className,
-              name: element.name,
-              html: element.innerHTML
-            });
           }
         }
 
         decide(buttons);
         decide(inputs);
 
-        return debugArr;
-      }, debugArr)
+        // return debugArr;
+      })
       .click(".unsubscribe-click-object")
       .end()
-      .then(debugArr => {
-        //debugArray only works when .click() line above is commented out
+      .then(() => {
         console.log("oneClickUnsub() Success");
         resolve(true);
       })

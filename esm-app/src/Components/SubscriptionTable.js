@@ -27,6 +27,7 @@ export class SubscriptionTable extends React.Component {
 
   handlesUnsubscribe = vendor => {
     this.setState({ unsubInProgress: true }, () => {
+      console.log(this.state.data[vendor]["url"])
       fetch("http://localhost:4000/unsubscribe/", {
         method: "POST",
         headers: {
