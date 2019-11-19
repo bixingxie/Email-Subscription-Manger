@@ -15,10 +15,15 @@ const CLIENT_SECRET = "ofE8qOpv4zKTJbWN9fwqJqXh";
 const CLIENT_ID =
   "602826117073-lt0upfo5khvk59dqf0u50ruor73rrg6n.apps.googleusercontent.com";
 
+const OS = process.platform;
+var DBPORT;
+if(OS == "darwin") { DBPORT = 8889 }
+if(OS == "win32") { DBPORT = 3306 }
+
 const connection = mysql.createConnection({
   host: "localhost",
   user: "ESMUser",
-  port: "3306",
+  port: DBPORT,
   password: "ESMPassword",
   database: "EmailSubscriptionManager"
 });
@@ -61,16 +66,24 @@ const getNumberOfEmails = (auth, labelID) => {
  * @param {function} callback Callback function to execute.
  */
 const getEmailList = (auth, callback) => {
+  console.log("getEmailList()")
   const gmail = google.gmail({ version: "v1", auth });
-  gmail.users.messages
-    .list({
-      userId: "me",
-      includeSpamTrash: false,
-      q: "unsubscribe OR subscription"
+
+  return new Promise(resolve => {
+    gmail.users.messages
+      .list({
+        userId: "me",
+        includeSpamTrash: false,
+        q: "unsubscribe OR subscription"
+      })
+      .then(response => {
+        console.log("getEmailList() done")
+        callback(auth, response.data.messages);
+      })
+      .then(() => {
+        resolve(null)
+      })
     })
-    .then(response => {
-      callback(auth, response.data.messages);
-    });
 };
 
 /**
@@ -225,13 +238,15 @@ router.get("/", (req, res) => {
   res.send({ status: "SUCCUSS" });
 });
 
-router.post("/get_token", (req, res) => {
+router.post("/get_token", async (req, res) => {
+  console.log("/get_token called")
   try {
     const tokenObj = req.body;
     app.locals.oAuth = initoAuthObj(tokenObj);
-    getEmailList(app.locals.oAuth, printEmailList);
-    getNumberOfEmails(app.locals.oAuth, "INBOX");
-    res.send({ status: "SUCCUSS" });
+    await getEmailList(app.locals.oAuth, printEmailList).then(() => {
+      console.log("/get_token Success")
+      res.send({ status: "SUCCUSS" });
+    })
   } catch (e) {
     res.send({ status: "ERROR" });
   }
@@ -377,4 +392,5 @@ router.post("/unsubscribe", async (req, res) => {
 
 app.listen(4000, () => {
   console.log("ESM Server listening on port 4000");
+  console.log("ESM DB on port " + DBPORT)
 });
