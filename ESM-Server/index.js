@@ -107,7 +107,7 @@ const getEmailContent = (auth, emailID) => {
         }
 
         parts.filter(part => {
-          part.mimeType == "text/plain";
+          part.mimeType == "text/html";
         });
 
         var emailContent = null
@@ -230,27 +230,6 @@ const storeToDB = (user, timestamp, sender, linkFetched) => {
     })
   })
 };
-
-/**
- * Return an array of email content
- * @param {OAuth2Client} auth      Authorization object.
- * @param {Array}        emailList A list of email to print.
- */
-// const getEmailAndStoreToDB = (auth, emailList) => {
-//   console.log("mapEmails() called")
-//   return new Promise((resolve) => {
-//     emailList.map(emailObj => {
-//       getEmailContent(auth, emailObj.id)
-//       .then(email => {
-//         storeToDB(app.locals.userEmail, email.date, email.sender, email.link)
-//         .then(() => {
-//           console.log("mapEmails() done")
-//           resolve(true)
-//         })
-//       })
-//     })
-//   })
-// };
 
 /**
  * Creates and initializes an authorization object given a token object
@@ -379,7 +358,7 @@ const oneClickUnsub = url => {
         var inputs = document.getElementsByTagName("input");
 
         function checkKeywords(string) {
-          var keywords = ["unsubscribe", "confirm", "yes"];
+          var keywords = ["unsubscribe", "confirm", "yes", "save"];
           var returnVal = false;
           for (keyword of keywords) {
             returnVal = string.toLowerCase().includes(keyword) || returnVal;
@@ -394,6 +373,9 @@ const oneClickUnsub = url => {
               checkKeywords(element.value)
             ) {
               element.className += " unsubscribe-click-object";
+            }
+            if(element.type == "checkbox") {
+              element.checked = !element.checked
             }
           }
         }

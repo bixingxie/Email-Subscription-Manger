@@ -69,8 +69,7 @@ CREATE DATABASE EmailSubscriptionManager;
 CREATE TABLE all_links (user VARCHAR(100) NOT NULL, vendor VARCHAR(300) NOT NULL, link VARCHAR(1000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
 
 ## One-Click™ Unsubscribe functionality:
-Currently looks for html buttons or inputs with keywords unsubscribe, confirm, or yes and clicks on it. If it cannot find a matching keyword it will notify
-that One-Click™ functionality is unavailable.
+Currently looks for html <buttons> or <inputs> with keywords "unsubscribe", "confirm", "yes", or "save" and clicks on it. <inputs> of type "checkbox" are switched to their off state if already on and on state if already off. The rationale behind this is that most email subscription providers generally leave these checkboxes in a starting state that needs user confirmation and favor keeping the user on their subscription list. If One-Click™ cannot find a matching keyword it will notify that One-Click™ functionality is unavailable.
 
 
 ## Credits
