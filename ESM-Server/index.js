@@ -370,7 +370,8 @@ const oneClickUnsub = url => {
           for (element of elements) {
             if (
               checkKeywords(element.innerHTML) ||
-              checkKeywords(element.value)
+              checkKeywords(element.value) ||
+              checkKeywords(element.alt)
             ) {
               element.className += " unsubscribe-click-object";
             }
