@@ -103,37 +103,50 @@ const getEmailContent = (auth, emailID) => {
       .then(async response => {
         const parts = response.data.payload.parts;
         if (!parts) {
-          resolve(null)
-          return;
+          return null;
         }
+
         parts.filter(part => {
           part.mimeType == "text/plain";
         });
 
-        await parts.forEach(async part => {
+        var emailContent = null
+
+        for (part of parts) {
+          console.log("getEmailContent(" + emailID + ") part " + (parseInt(part.partId) + 1) + "/" + parts.length)
           if (part.body.data != null) {
             const headers = response.data.payload.headers;
             const sender = searchHeaders(headers, "From");
             const emailDate = searchHeaders(headers, "Date");
             const message = Buffer.from(part.body.data, "base64").toString();
 
+
             const $ = cheerio.load(message);
             const links = $("a");
-            await $(links).each((i, link) => {
+
+            $(links).each((i, link) => {
               const text = $(link)
                 .text()
                 .toLowerCase();
               if (
                 text.indexOf("subscribe") !== -1 ||
-                text.indexOf("subscription") !== -1
+                text.indexOf("subscription") !== -1 ||
+                text.indexOf("unsubscribe") !== -1
               ) {
+                console.log("getEmailContent() found subscription")
                 const linkFetched = $(link).attr("href");
-                console.log("getEmailContent(" + emailID + ") done")
-                resolve({date: emailDate, sender: sender, link: linkFetched, id: emailID})
-              } else { resolve(null) }
-            });
-          } else { resolve(null) }
-        });
+                emailContent = {date: emailDate, sender: sender, link: linkFetched, id: emailID}
+                return false;
+              }
+              return true
+            })
+          }
+        }
+        return emailContent;
+      })
+      .then((emailContent) => {
+        console.log("getEmailContent(" + emailID + ") done")
+        resolve(emailContent)
       })
       .catch(err => {
         console.log(err);
@@ -171,7 +184,7 @@ const storeToDB = (user, timestamp, sender, linkFetched) => {
   const sql = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
   FROM all_links WHERE user="${user}" AND vendor="${sender}"`;
 
-  return new Promise(async resolve => {
+  return new Promise(resolve => {
 
     connection.query(sql, (err, rst) => {
       if (err) {
@@ -206,12 +219,13 @@ const storeToDB = (user, timestamp, sender, linkFetched) => {
           connection.query(sql, (err, results) => {
             if (err) {
               console.log(err);
+              resolve(false)
             } else {
               console.log("sendUnsubLinkToDB: unsubscription link sent to DB");
               resolve(true)
             }
           })
-        } else { console.log("storeToDB() invalid"; resolve(false); }
+        } else { console.log("storeToDB() invalid"); resolve(false); }
       }
     })
   })
