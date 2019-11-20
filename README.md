@@ -4,7 +4,6 @@ ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. E
 
 
 ## Building
-
 Please refer to the [build file](/build.md).
 
 
@@ -46,7 +45,6 @@ Frontend: React.JS
 Backend: Node.JS, Express.JS
 
 Database: MySQL
-
 
 
 ## Next Steps 
