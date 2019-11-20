@@ -65,6 +65,7 @@ const getNumberOfEmails = (auth, labelID) => {
  * @param {OAuth2Client} auth Authorization object.
  * @param {function} callback Callback function to execute.
  */
+
 const getEmailList = (auth, callback) => {
   console.log("getEmailList()")
   const gmail = google.gmail({ version: "v1", auth });
@@ -77,14 +78,11 @@ const getEmailList = (auth, callback) => {
         q: "unsubscribe OR subscription"
       })
       .then(response => {
+        resolve(response.data.messages)
         console.log("getEmailList() done")
-        callback(auth, response.data.messages);
-      })
-      .then(() => {
-        resolve(null)
-      })
-    })
-};
+        })
+  })
+}
 
 /**
  * Gets the email content of a particular email from the Gmail API.
@@ -92,50 +90,56 @@ const getEmailList = (auth, callback) => {
  * @param {string}       emailID The email ID to get.
  */
 const getEmailContent = (auth, emailID) => {
+  console.log("getEmailContent(" + emailID + ") called")
+
   const gmail = google.gmail({ version: "v1", auth });
-  gmail.users.messages
-    .get({
-      userId: "me",
-      id: emailID,
-      format: "full"
-    })
-    .then(response => {
-      const parts = response.data.payload.parts;
-      if (!parts) {
-        return;
-      }
-      parts.filter(part => {
-        return part.mimeType == "text/plain";
-      });
-
-      parts.forEach(part => {
-        if (part.body.data != null) {
-          const headers = response.data.payload.headers;
-          const sender = searchHeaders(headers, "From");
-          const emailDate = searchHeaders(headers, "Date");
-          const message = Buffer.from(part.body.data, "base64").toString();
-
-          const $ = cheerio.load(message);
-          const links = $("a");
-          $(links).each((i, link) => {
-            const text = $(link)
-              .text()
-              .toLowerCase();
-            if (
-              text.indexOf("subscribe") !== -1 ||
-              text.indexOf("subscription") !== -1
-            ) {
-              const linkFetched = $(link).attr("href");
-              storeToDB(app.locals.userEmail, emailDate, sender, linkFetched);
-              return;
-            }
-          });
+  return new Promise(resolve => {
+    gmail.users.messages
+      .get({
+        userId: "me",
+        id: emailID,
+        format: "full"
+      })
+      .then(async response => {
+        const parts = response.data.payload.parts;
+        if (!parts) {
+          resolve(null)
+          return;
         }
+        parts.filter(part => {
+          part.mimeType == "text/plain";
+        });
+
+        await parts.forEach(async part => {
+          if (part.body.data != null) {
+            const headers = response.data.payload.headers;
+            const sender = searchHeaders(headers, "From");
+            const emailDate = searchHeaders(headers, "Date");
+            const message = Buffer.from(part.body.data, "base64").toString();
+
+            const $ = cheerio.load(message);
+            const links = $("a");
+            await $(links).each((i, link) => {
+              const text = $(link)
+                .text()
+                .toLowerCase();
+              if (
+                text.indexOf("subscribe") !== -1 ||
+                text.indexOf("subscription") !== -1
+              ) {
+                const linkFetched = $(link).attr("href");
+                console.log("getEmailContent(" + emailID + ") done")
+                resolve({date: emailDate, sender: sender, link: linkFetched, id: emailID})
+              } else { resolve(null) }
+            });
+          } else { resolve(null) }
+        });
+      })
+      .catch(err => {
+        console.log(err);
       });
-    })
-    .catch(err => {
-      console.log(err);
-    });
+  })
+
 };
 
 /**
@@ -160,54 +164,57 @@ function searchHeaders(headers, headerName) {
  * @param {String} link Link to be stored
  */
 const storeToDB = (user, timestamp, sender, linkFetched) => {
+  console.log("storeToDB() called")
   sender = sender.replace(/"/g, "").replace(" ", "");
   const jsTimeStamp = Date.parse(timestamp) / 1000;
 
   const sql = `SELECT user, vendor, link, UNIX_TIMESTAMP(last_modified) as last_modified, unsubscribed
   FROM all_links WHERE user="${user}" AND vendor="${sender}"`;
 
-  connection.query(sql, (err, rst) => {
-    if (err) {
-      return console.log(err);
-    } else {
-      var valid = false; //if current vendor user pair is new to db
-      var update = false; //if current vendor user paird needs be posted
+  return new Promise(async resolve => {
 
-      if (rst.length == 0) {
-        valid = true;
+    connection.query(sql, (err, rst) => {
+      if (err) {
+        console.log("storeToDB() " + err);
+        resolve(false)
       } else {
-        if (jsTimeStamp > rst[0].last_modified) {
-          valid = true;
-          update = true;
-        }
-      }
+        var valid = false; //if current vendor user pair is new to db
+        var update = false; //if current vendor user paird needs be posted
 
-      //update database
-      if (valid) {
-        let sql;
-        if (update) {
-          console.log("updating DB");
-          sql = `UPDATE all_links SET link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})
-          WHERE user="${user}" AND vendor="${sender}"`;
+        if (rst.length == 0) {
+          valid = true;
         } else {
-          console.log("INSERTING into DB");
-          sql = `INSERT INTO all_links (user, vendor, link, unsubscribed, last_modified)
-          VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp}))
-          ON DUPLICATE KEY UPDATE link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})`;
-        }
-        // console.log(sql);
-        connection.query(sql, (err, results) => {
-          if (err) {
-            // return console.error(err);
-          } else {
-            return console.log(
-              "sendUnsubLinkToDB: unsubscription link sent to DB"
-            );
+          if (jsTimeStamp > rst[0].last_modified) {
+            valid = true;
+            update = true;
           }
-        });
+        }
+
+        //update database
+        if (valid) {
+          let sql;
+          if (update) {
+            console.log("updating DB");
+            sql = `UPDATE all_links SET link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})
+            WHERE user="${user}" AND vendor="${sender}"`;
+          } else {
+            console.log("INSERTING into DB");
+            sql = `INSERT INTO all_links (user, vendor, link, unsubscribed, last_modified)
+            VALUES ("${user}", "${sender}", "${linkFetched}", 0, FROM_UNIXTIME(${jsTimeStamp}))
+            ON DUPLICATE KEY UPDATE link = "${linkFetched}", unsubscribed = 0, last_modified = FROM_UNIXTIME(${jsTimeStamp})`;
+          }
+          connection.query(sql, (err, results) => {
+            if (err) {
+              console.log(err);
+            } else {
+              console.log("sendUnsubLinkToDB: unsubscription link sent to DB");
+              resolve(true)
+            }
+          })
+        } else { console.log("storeToDB() invalid"; resolve(false); }
       }
-    }
-  });
+    })
+  })
 };
 
 /**
@@ -215,9 +222,21 @@ const storeToDB = (user, timestamp, sender, linkFetched) => {
  * @param {OAuth2Client} auth      Authorization object.
  * @param {Array}        emailList A list of email to print.
  */
-const printEmailList = (auth, emailList) => {
-  return emailList.map(emailObj => getEmailContent(auth, emailObj.id));
-};
+// const getEmailAndStoreToDB = (auth, emailList) => {
+//   console.log("mapEmails() called")
+//   return new Promise((resolve) => {
+//     emailList.map(emailObj => {
+//       getEmailContent(auth, emailObj.id)
+//       .then(email => {
+//         storeToDB(app.locals.userEmail, email.date, email.sender, email.link)
+//         .then(() => {
+//           console.log("mapEmails() done")
+//           resolve(true)
+//         })
+//       })
+//     })
+//   })
+// };
 
 /**
  * Creates and initializes an authorization object given a token object
@@ -243,14 +262,25 @@ router.post("/get_token", async (req, res) => {
   try {
     const tokenObj = req.body;
     app.locals.oAuth = initoAuthObj(tokenObj);
-    await getEmailList(app.locals.oAuth, printEmailList).then(() => {
+    await getEmailList(app.locals.oAuth)
+    .then(async (emailList) => {
+      for(emailObj of emailList) {
+        var emailContent = await getEmailContent(app.locals.oAuth, emailObj.id)
+        if(emailContent) {
+          console.log("calling storeToDB() on emailID " + emailContent.id)
+          await storeToDB(app.locals.userEmail, emailContent.date, emailContent.sender, emailContent.link)
+        }
+      }
+    })
+    .then(() => {
       console.log("/get_token Success")
       res.send({ status: "SUCCUSS" });
     })
   } catch (e) {
+    console.log("/get_token " + e)
     res.send({ status: "ERROR" });
   }
-});
+})
 
 router.get("/get_email", (req, res) => {
   try {

@@ -24,7 +24,7 @@ export class HomePage extends React.Component {
       userName: userInfo ? userInfo.userName : null,
       tokenObj: userInfo ? userInfo.tokenObj : null,
       token: "",
-      subscriptions: {}, 
+      subscriptions: {},
       fetchDone: null
     };
   }
@@ -36,7 +36,7 @@ export class HomePage extends React.Component {
         token: response.tokenId,
         userEmail: response.profileObj.email,
         userName: response.profileObj.name,
-        tokenObj: response.tokenObj, 
+        tokenObj: response.tokenObj,
         fetchDone: false
       },
       () => {
@@ -62,7 +62,9 @@ export class HomePage extends React.Component {
       body: JSON.stringify(this.state.tokenObj),
     })
     .then((res) => {
+      console.log(this.state.fetchDone)
       this.setState({fetchDone: true})
+      console.log(this.state.fetchDone)
     })
     .catch(err => {
       console.log(err)
@@ -124,7 +126,7 @@ export class HomePage extends React.Component {
           userName={this.state.userName ? this.state.userName : "please log in"}
         />
 
-        <Card>{this.state.isAuthenticated 
+        <Card>{this.state.isAuthenticated
           ? (this.state.fetchDone === false ? <Spinner/> : <HomePageBody /> )
           : <hr />}</Card>
 
