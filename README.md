@@ -4,7 +4,7 @@ ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. E
 
 
 ## Building
-Please refer to the [build file](/build.md).
+Please refer to the [build file](/Build.md).
 
 
 
