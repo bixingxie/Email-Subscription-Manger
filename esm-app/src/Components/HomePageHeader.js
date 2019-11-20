@@ -21,13 +21,14 @@ const useStyles = makeStyles({
   }
 });
 
-export default function HomePageCard(props) {
+export default function HomePageHeader(props) {
   const classes = useStyles();
 
   return (
     <Card className={classes.card}>
       <CardContent>
         <Typography
+          align="center"
           variant="h4"
           className={classes.title}
           color="textSecondary"
@@ -35,7 +36,7 @@ export default function HomePageCard(props) {
         >
           Email Subscriptions Manager
         </Typography>
-        <Typography variant="h6" component="p">
+        <Typography align="center" variant="h6" component="p">
           Welcome, {props.userName}
           <br />
           {"Time to clean your cluttered inbox!"}

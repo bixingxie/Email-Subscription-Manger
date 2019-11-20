@@ -1,11 +1,13 @@
 import React from "react";
-import { SubscriptionTable } from "./SubscriptionTable";
+import { HomePageBody } from "./HomePageBody";
 import { GoogleLogin } from "react-google-login";
 import { GoogleLogout } from "react-google-login";
 import localStorage from "local-storage";
 import Paper from "@material-ui/core/Paper";
 import Card from "@material-ui/core/Card";
-import HomePageCard from "./HomePageCard";
+import Grid from "@material-ui/core/Grid";
+import {Spinner} from "./Spinner"
+import HomePageHeader from "./HomePageHeader";
 
 // Given by Google API
 const CLIENT_ID =
@@ -22,7 +24,8 @@ export class HomePage extends React.Component {
       userName: userInfo ? userInfo.userName : null,
       tokenObj: userInfo ? userInfo.tokenObj : null,
       token: "",
-      subscriptions: {}
+      subscriptions: {},
+      fetchDone: null
     };
   }
 
@@ -33,10 +36,10 @@ export class HomePage extends React.Component {
         token: response.tokenId,
         userEmail: response.profileObj.email,
         userName: response.profileObj.name,
-        tokenObj: response.tokenObj
+        tokenObj: response.tokenObj,
+        fetchDone: false
       },
       () => {
-        console.log(this.state.tokenObj)
         this.sendUserToken();
         localStorage.set(
           "userInfo",
@@ -50,18 +53,33 @@ export class HomePage extends React.Component {
     );
   };
 
-  // Send user token to backend
   sendUserToken = () => {
-    console.log(this.state.tokenObj)
     fetch("http://localhost:4000/get_token/", {
       method: "POST",
       headers: {
-        // Accept: "application/json",
         "Content-Type": "application/json"
       },
       body: JSON.stringify(this.state.tokenObj),
-    });
+    })
+    .then((res) => {
+      console.log(this.state.fetchDone)
+      this.setState({fetchDone: true})
+      console.log(this.state.fetchDone)
+    })
+    .catch(err => {
+      console.log(err)
+    })
   };
+
+  sendUserEmail = (email) => {
+    fetch(`http://localhost:4000/get_email/?email=${email}`, {
+      headers: {
+        Accept: "application/jsosn",
+        "Content-Type": "application/json"
+      }
+    })
+    .then(response => (console.log(response)))
+  }
 
   // Handles logout
   logout = () => {
@@ -76,6 +94,10 @@ export class HomePage extends React.Component {
 
   render() {
     let logInOrOutButton;
+
+     if (this.state.isAuthenticated) {
+      this.sendUserEmail(this.state.userEmail || JSON.parse(localStorage.get("userInfo")).userEmail)
+    }
 
     if (this.state.isAuthenticated) {
       logInOrOutButton = (
@@ -100,16 +122,26 @@ export class HomePage extends React.Component {
 
     return (
       <Paper>
-        <HomePageCard
+        <HomePageHeader
           userName={this.state.userName ? this.state.userName : "please log in"}
         />
-        <Card>{logInOrOutButton}</Card>
-        
-        <Card>
-          {this.state.isAuthenticated ? <SubscriptionTable /> : <hr />}
-        </Card>
 
+        <Card>{this.state.isAuthenticated
+          ? (this.state.fetchDone === false ? <Spinner/> : <HomePageBody /> )
+          : <hr />}</Card>
 
+        <Grid
+          container
+          spacing={0}
+          direction="column"
+          alignItems="center"
+          justify="center"
+          style={{ minHeight: "10vh" }}
+        >
+          <Grid item xs={3}>
+            <Card>{logInOrOutButton}</Card>
+          </Grid>
+        </Grid>
       </Paper>
     );
   }
