@@ -71,7 +71,6 @@ export default function App() {
                         <Tabs value={value} onChange={handleChange} aria-label="simple tabs example">
                         <Tab label="Home" {...a11yProps(0)} />
                         <Tab label="About" {...a11yProps(1)} />
-                        <Tab label="Privacy" {...a11yProps(2)} />
                         </Tabs>
                     </AppBar>
                     <TabPanel value={value} index={0}>
@@ -79,9 +78,6 @@ export default function App() {
                     </TabPanel>
                     <TabPanel value={value} index={1}>
                         <AboutPage/>
-                    </TabPanel>
-                    <TabPanel value={value} index={2}>
-                        Privacy
                     </TabPanel>
             </div>
         </ThemeProvider>

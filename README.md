@@ -1,79 +1,79 @@
 # Email-Subscription-Manger
-ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. ESM helps to clean the user's cluttered email inbox.
+ESM is a web application developed with Node.JS, Express, React.JS, and MySQL. ESM displays user's subscription emails and provides One-Click™ unsubscribe functionality.
 
 
 
-## State of the Program
+## Building
 
-**Finished:**
-
-1. Authenticate the user via Gmail API on the frontend.
-2. Pass the authorization token object to the backend (Node.JS).
-3. Read a list of user emails in HTML format in the backend.
-4. Parsing and grouping subscription emails.
-5. Displaying parsed emails on the frontend.
-6. 1-Click Unsubscribe
-
-**To do**:
-
-1. Persistant storage (MySQL)
-2. Better UI
-
-4. Add Popular Subscriptions
-
-## Dependencies
-
-1. Npm
-
-    `brew install npm`
-
-2. Yarn
-
-   `brew install yarn`
-
-3. Express, MySQL, Cors
-
-   `yarnpkg add express mysql cors`
-
-4. Nodemon
-
-   `npm install -g nodemon`
-
-5. React.JS
+Please refer to the [build file](/build.md).
 
 
 
-## Running the App
+## Limitations
 
-### Backend
+1. Currently only works for NYU school emails because Gmail API's security standard. Publishing the app and having it work for all Gmails will require Google's approval.
 
-`nodemon index.js`
+2. Currently Database only works for Windows and Mac OS.
 
-### Frontend
+3. It is best to explicitly log out everytime to prevent possible bugs associated with the use of Cookies in the front end.
 
-`yarnpkg start`
+   
 
-### Databse
+## How do we find your subscription email? 
 
-**Recommended**: running phpMyAdmin at `localhost:8889`
-
-I'm using mysql 5.6
-Create a user ESMUser with password ESMPassword in mysql. It can be achieved by "add a new user" link on phpmyadmin under the Privileges tab, or by running
-SET PASSWORD for 'ESMUser'@'localhost' = password('ESMPassword')
-in MySQL console.
-We need privileges Select, Insert, Create, Update
-
-Then we will create a database EmailSubscriptionManager and a table all_links
-
-CREATE DATABASE EmailSubscriptionManager;
-CREATE TABLE all_links (user VARCHAR(100) NOT NULL, vendor VARCHAR(300) NOT NULL, link VARCHAR(1000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
-
-## One-Click™ Unsubscribe functionality:
-Currently looks for html <buttons> or <inputs> with keywords "unsubscribe", "confirm", "yes", or "save" and clicks on it. <inputs> of type "checkbox" are switched to their off state if already on and on state if already off. The rationale behind this is that most email subscription providers generally leave these checkboxes in a starting state that needs user confirmation and favor keeping the user on their subscription list. If One-Click™ cannot find a matching keyword it will notify that One-Click™ functionality is unavailable.
+Using Gmail API provided by Google, we are able to fetch emails with a query (for example, emails that contain keywords such as subscribe, unsubscribe, subscriptions, etc). Then, with the help of Cheerio.JS, we are able to analyze the raw HTML text of these emails and extract unsubcribe link (usually a href next to a keyword). Finally, we update database accordingly.
 
 
-## Credits
+
+## How does One-Click™ work?
+
+Uses [Nightmare.JS](https://github.com/segmentio/nightmare), a high level JS automation library, the application looks for html <buttons> or <inputs> with keywords "unsubscribe", "confirm", "yes", or "save" and clicks on it. <inputs> of type "checkbox" are switched to their off state if already on and on state if already off. The rationale behind this is that most email subscription providers generally leave these checkboxes in a starting state that needs user confirmation and favor keeping the user on their subscription list. If One-Click™ cannot find a matching keyword it will notify that One-Click™ functionality is unavailable.
+
+Per current immature testing, One-Click™ works on ~30% of the subscriptions emails we have. One-Click™ could work for more cases but that will require scrutiny into the HTML for a specific vendor unsubscriptionn page. For example, on Amazon's unsubscribe page, the button is rendered as an image input instead of a text input, which is a case we didn't check for. By adding a check, we achieved One-Click™ on Amazon.
+
+
+
+## How we use your data? 
+
+ESM values user privacy and therefore only runs through subscription email content. ESM only stores the sender of subscription emails and the link to unsubscribe. 
+
+
+
+## Architecture 
+
+Frontend: React.JS
+
+Backend: Node.JS, Express.JS
+
+Database: MySQL
+
+
+
+## Next Steps 
+
+1. Public deployment, which will require Google's consent. But it will also resolve the current limitation that the application only works for NYU school email. 
+2. Testing. Currently there are no systematic testing procedures in place. A suite of integration tests and unit tests, and a CI-CD pipeline, will be desirable. 
+3. Improve One-Click™. Make it such that One-Click™ works for more cases, at least for all the well-known subscriptions.  
+
+
+
+## External Resources 
+
+Please refer to package.json for a complete list of libraries we've used. The main ones are mentioned below.
+
+* [Material-UI](https://material-ui.com/):  React components.
+* [Express.JS](https://expressjs.com/): Node.JS web framework.
+* [Nightmare.JS](https://github.com/segmentio/nightmare): JS automation library.
+* [Cheerio.JS](https://github.com/cheeriojs/cheerio): For parsing markup and traversing the resulting data structure.
+* [MySQL.JS](https://github.com/mysqljs/mysql): Node.JS javascript client implementing the MySQL protocol. 
+* [react-google-login](https://www.npmjs.com/package/react-google-login): React component for logging in/out Google account.
+
+
+
+
+## Contributors
 
 * **Bixing Xie** - (https://github.com/bixingxie)
 * **Bronson Lee** - (https://github.com/bkl263)
 * **Mengzhe Ding** - (https://github.com/MengzheDing)
+* With advisement of **Professor Jeff Epstein**
