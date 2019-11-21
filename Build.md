@@ -1,90 +1,73 @@
-# Pre-Installation
-Email Subscription Manager can run either using [node.js](https://nodejs.org/en/) or Homebrew. Depending on your choice, please ensure you have either one installed.
-
-## node.js
-Check if your machine has node.js installed. You can check by opening up command line (for Windows) or terminal (for Mac).
-1. Check **node.js**
-```
-node -v
-```
-2. Check **npm**
-```
-npm -v
-```
-
-## Homebrew
-1.
-
 # Dependencies
-If you have node.js installed skip to step 6.
+1. Install **node** (skip if you have node already)
 
-1. Install **npm**
-
-   ```
-   brew install npm
-   ```
-
-2. Install **Yarn**
+   You could install using brew if you are on Mac: 
 
    ```
-   brew install yarn
+   brew install node
    ```
 
-3. Install **Express**, **MySQL**, **Cors**
+   Alternatively, you can download node here: https://nodejs.org/en/download/. Npm is included when you install node. 
 
-   ```
-   yarnpkg add express mysql cors
-   ```
-
-4. Install **Nodemon**, used to run the Express app
-
-   ```
-   npm install -g nodemon
-   ```
-
-5. Install **React**
-
-   ```
-   npm install react react-dom --save
-   ```
-
-6. Change directory to the backend and npm install
+2. Change directory to the backend and npm install
 
    ```
    cd ESM-Server
    npm install
    ```
 
-7. Change direcotry to the frontend and npm install
+3. Change direcotry to the frontend and npm install
 
    ```
    cd esm-app
    npm install
    ```
 
-8. **Set up MySQL Database**:
 
-   Please install MAMP (for Mac) or WAMP (for windows), or any MySQL server.
 
-   Set up the **database schema**:
+# Set Up MySQL Database 
 
-   ```sql
+1. Please install MAMP (for Mac) or WAMP (for windows), or any MySQL server and run it on localhost.
+
+2. Create a new user:
+
+   ```mysql
+   CREATE USER 'ESMUser'@'localhost' IDENTIFIED BY 'ESMPassword';
+   ```
+
+3. Create a new database:
+
+   ```mysql
    CREATE DATABASE EmailSubscriptionManager;
    ```
 
-   ```sql
-   CREATE TABLE all_links (user VARCHAR(500) NOT NULL, vendor VARCHAR(10000) NOT NULL, link VARCHAR(10000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
-   ```
-
-   Set up the **database user**:
+4. Go to the new database: 
 
    ```mysql
-   SET PASSWORD for 'ESMUser'@'localhost' = 'ESMPassword'
+   USE EmailSubscriptionManager;
    ```
 
-   Give the user right **privileges**:
+5. Create a new table: 
 
-   Go to the database(EmailSubscriptionManager) we just created, click **Privileges** on the navigation bar, click **Edit Privileges** under **Action** for **ESMUser**, and grant it all privileges.
+   ```mysql
+   CREATE TABLE all_links (user VARCHAR(500) NOT NULL, vendor VARCHAR(500) NOT NULL, link VARCHAR(10000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
+   ```
+
+6. Grant privileges to the user: 
+
+   ```mysql
+   GRANT SELECT, INSERT, DELETE, CREATE, UPDATE ON database.* TO ESMUser@localhost;
+   ```
+
+**Note**: If you encounter the ERROR 1396 (HY000): Operation CREATE USER failed, when adding a user you have just dropped before, it is caused by a bug from MySQL. You can get around it with the following instruction:
+
+```mysql
+drop user ESMUser@localhost;
+flush privileges;
+create user ESMUser@localhost identified by 'password'
+```
+
+
 
 # Build
 
@@ -115,23 +98,11 @@ npm start
 
 A new window on your default browser should pop up. If this does not occur please, open any web browser and visit http://localhost:3000/
 
-## Contact
 
 
-1.  CREATE USER 'ESMUser'@'localhost' IDENTIFIED BY 'ESMPassword';
+# Contact
 
-2.  CREATE DATABASE EmailSubscriptionManager;
-
-3.  USE EmailSubscriptionManager;
-
-4.  CREATE TABLE all_links (user VARCHAR(300) NOT NULL, vendor VARCHAR(500) NOT NULL, link VARCHAR(2200) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
-
-5.  GRANT SELECT, INSERT, DELETE, CREATE, UPDATE ON `database`.* TO `ESMUser`@`localhost`;
-
-Note: If you encounter the ERROR 1396 (HY000): Operation CREATE USER failed, when adding a user you have just dropped before, it is caused by a bug from MySQL. You can get around it with the following instruction:
-    1.  drop user ESMUser@localhost;
-    2.  flush privileges;
-    3.  create user ESMUser@localhost identified by 'password'
+We tested the build process on both Mac and Windows machines and it should work. Please kindly let us know if any problem happens. 
 
 
 * Bixing Xie (bx357@nyu.edu)
