@@ -1,6 +1,8 @@
 # Pre-Installation
-## Installing node.js
-Ensure your machine has [node.js](https://nodejs.org/en/) installed. You can check by opening up command line (for Windows) or terminal (for Mac).
+Email Subscription Manager can run either using [node.js](https://nodejs.org/en/) or Homebrew. Depending on your choice, please ensure you have either one installed.
+
+## node.js
+Check if your machine has node.js installed. You can check by opening up command line (for Windows) or terminal (for Mac).
 1. Check **node.js**
 ```
 node -v
@@ -10,7 +12,7 @@ node -v
 npm -v
 ```
 
-## Installing brew
+## Homebrew
 1.
 
 # Dependencies
