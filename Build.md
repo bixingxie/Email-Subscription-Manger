@@ -1,4 +1,20 @@
+# Pre-Installation
+## Installing node.js
+Ensure your machine has [node.js](https://nodejs.org/en/) installed. You can check by opening up command line (for Windows) or terminal (for Mac).
+1. Check **node.js**
+```
+node -v
+```
+2. Check **npm**
+```
+npm -v
+```
+
+## Installing brew
+1.
+
 # Dependencies
+If you have node.js installed skip to step 6.
 
 1. Install **npm**
 
@@ -37,7 +53,7 @@
    npm install
    ```
 
-7. Change direcotry to the frontend and npm install 
+7. Change direcotry to the frontend and npm install
 
    ```
    cd esm-app
@@ -48,7 +64,7 @@
 
    Please install MAMP (for Mac) or WAMP (for windows), or any MySQL server.
 
-   Set up the **database schema**: 
+   Set up the **database schema**:
 
    ```sql
    CREATE DATABASE EmailSubscriptionManager;
@@ -68,36 +84,34 @@
 
    Go to the database(EmailSubscriptionManager) we just created, click **Privileges** on the navigation bar, click **Edit Privileges** under **Action** for **ESMUser**, and grant it all privileges.
 
-# Build 
+# Build
 
 ### Database
 
-Make sure that you have the MySQL database running. It is currently set up in the backend that it will try to connect to MySQL server at port 8889 if you are using a Mac OS, or port 3306 if you are using a Windows OS, which are usually the default ports for the two different systems. If your MySQL database runs on a different port, please go to ESM-Server/index.js and overwrite lines 19-21 to: 
+Make sure that you have the MySQL database running. It is currently set up in the backend that it will try to connect to MySQL server at port 8889 if you are using a Mac OS, or port 3306 if you are using a Windows OS, which are usually the default ports for the two different systems. If your MySQL database runs on a different port or you would like to select your own port, please go to ESM-Server/index.js and overwrite lines 19-21 to:
 ```javascript
 var DBPORT = INSERT YOUR MYSQL PORT HERE;
 ```
 
-### Backend
+### Starting Backend Server
 
-Change directory to the backend. 
-
+Start terminal and change directory to the backend. Then start the server.
 ```
 cd ESM-Server
-nodemon index.js
+node index.js
 ```
-
 Backend server should be running at: http://localhost:4000/
 
-### Frontend
+### Starting the Email Subscription Manager
 
-Strat a new terminal, change directory to the frontend.
+Start a new terminal, change directory to the frontend.
 
 ```
 cd esm-app
-yarnpkg start
+npm start
 ```
 
-A new window should pop up, if not, please visit frontend at http://localhost:3000/
+A new window on your default browser should pop up. If this does not occur please, open any web browser and visit http://localhost:3000/
 
 ## Contact
 
