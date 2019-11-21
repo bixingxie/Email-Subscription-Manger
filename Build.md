@@ -48,5 +48,18 @@
 
     The DB schema is as follows:
 
-1.  CREATE DATABASE EmailSubscriptionManager;
-2.  CREATE TABLE all_links (user VARCHAR(500) NOT NULL, vendor VARCHAR(10000) NOT NULL, link VARCHAR(10000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
+
+1.  CREATE USER 'ESMUser'@'localhost' IDENTIFIED BY 'password';
+
+2.  CREATE DATABASE EmailSubscriptionManager;
+
+3.  USE EmailSubscriptionManager;
+
+4.  CREATE TABLE all_links (user VARCHAR(100) NOT NULL, vendor VARCHAR(10000) NOT NULL, link VARCHAR(10000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
+
+5.  GRANT SELECT, INSERT, DELETE, CREATE, UPDATE ON `database`.* TO `ESMUser`@`localhost`;
+
+Note: If you encounter the ERROR 1396 (HY000): Operation CREATE USER failed, when adding a user you have just dropped before, it is caused by a bug from MySQL. You can get around it with the following instruction:
+    1.  drop user ESMUser@localhost;
+    2.  flush privileges;
+    3.  create user ESMUser@localhost identified by 'password'
