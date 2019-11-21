@@ -102,13 +102,13 @@ A new window should pop up, if not, please visit frontend at http://localhost:30
 ## Contact
 
 
-1.  CREATE USER 'ESMUser'@'localhost' IDENTIFIED BY 'password';
+1.  CREATE USER 'ESMUser'@'localhost' IDENTIFIED BY 'ESMPassword';
 
 2.  CREATE DATABASE EmailSubscriptionManager;
 
 3.  USE EmailSubscriptionManager;
 
-4.  CREATE TABLE all_links (user VARCHAR(100) NOT NULL, vendor VARCHAR(10000) NOT NULL, link VARCHAR(10000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
+4.  CREATE TABLE all_links (user VARCHAR(300) NOT NULL, vendor VARCHAR(500) NOT NULL, link VARCHAR(2200) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
 
 5.  GRANT SELECT, INSERT, DELETE, CREATE, UPDATE ON `database`.* TO `ESMUser`@`localhost`;
 
@@ -116,6 +116,8 @@ Note: If you encounter the ERROR 1396 (HY000): Operation CREATE USER failed, whe
     1.  drop user ESMUser@localhost;
     2.  flush privileges;
     3.  create user ESMUser@localhost identified by 'password'
+
+
 * Bixing Xie (bx357@nyu.edu)
 * Bronson Lee (bkl263@nyu.edu )
 * Mengzhe Ding (md3837@nyu.edu)
