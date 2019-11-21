@@ -1,52 +1,103 @@
-1. Npm
+# Dependencies
 
-    `brew install npm`
+1. Install **npm**
 
-2. Yarn
+   ```
+   brew install npm
+   ```
 
-   `brew install yarn`
+2. Install **Yarn**
 
-3. Express, MySQL, Cors
+   ```
+   brew install yarn
+   ```
 
-   `yarnpkg add express mysql cors`
+3. Install **Express**, **MySQL**, **Cors**
 
-4. Nodemon
+   ```
+   yarnpkg add express mysql cors
+   ```
 
-   `npm install -g nodemon`
+4. Install **Nodemon**, used to run the Express app
 
-5. React.JS
+   ```
+   npm install -g nodemon
+   ```
 
-    `npm install react react-dom --save`
+5. Install **React**
 
+   ```
+   npm install react react-dom --save
+   ```
 
-## Running the App
+6. Change directory to the backend and npm install
+
+   ```
+   cd ESM-Server
+   npm install
+   ```
+
+7. Change direcotry to the frontend and npm install 
+
+   ```
+   cd esm-app
+   npm install
+   ```
+
+8. **Set up MySQL Database**:
+
+   Please install MAMP (for Mac) or WAMP (for windows), or any MySQL server.
+
+   Set up the **database schema**: 
+
+   ```sql
+   CREATE DATABASE EmailSubscriptionManager;
+   ```
+
+   ```sql
+   CREATE TABLE all_links (user VARCHAR(500) NOT NULL, vendor VARCHAR(10000) NOT NULL, link VARCHAR(10000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
+   ```
+
+   Set up the **database user**:
+
+   ```mysql
+   SET PASSWORD for 'ESMUser'@'localhost' = 'ESMPassword'
+   ```
+
+   Give the user right **privileges**:
+
+   Go to the database(EmailSubscriptionManager) we just created, click **Privileges** on the navigation bar, click **Edit Privileges** under **Action** for **ESMUser**, and grant it all privileges.
+
+# Build 
+
+### Database
+
+Make sure that you have the MySQL database running.
 
 ### Backend
 
-`nodemon index.js`
+Change directory to the backend. 
+
+```
+cd ESM-Server
+nodemon index.js
+```
+
+Backend server should be running at: http://localhost:4000/
 
 ### Frontend
 
-`yarnpkg start`
+Strat a new terminal, change directory to the frontend.
 
-### adding requried modules
-    run 
-    `npm install` 
-    in the directory of backend and frontend seperately after pulling the repository for the first time form github
+```
+cd esm-app
+yarnpkg start
+```
 
+A new window should pop up, if not, please visit frontend at http://localhost:3000/
 
-### DataBase:
+## Contact
 
-    Version: mysql 5.6
-
-    User: ESMUser
-    Password: ESMPassword
-    Privileges: Select, Insert, Create, Update
-
-    Databse: EmailSubscriptionManager
-    table: all_links
-
-    The DB schema is as follows:
-
-1.  CREATE DATABASE EmailSubscriptionManager;
-2.  CREATE TABLE all_links (user VARCHAR(500) NOT NULL, vendor VARCHAR(10000) NOT NULL, link VARCHAR(10000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
+* Bixing Xie (bx357@nyu.edu)
+* Bronson Lee (bkl263@nyu.edu )
+* Mengzhe Ding (md3837@nyu.edu)
