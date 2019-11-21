@@ -74,7 +74,7 @@
 
 Make sure that you have the MySQL database running. It is currently set up in the backend that it will try to connect to MySQL server at port 8889 if you are using a Mac OS, or port 3306 if you are using a Windows OS, which are usually the default ports for the two different systems. If your MySQL database runs on a different port, please go to ESM-Server/index.js and overwrite lines 19-21 to: 
 ```javascript
-var DBPORT = [INSERT YOUR MYSQL PORT HERE];
+var DBPORT = INSERT YOUR MYSQL PORT HERE;
 ```
 
 ### Backend
