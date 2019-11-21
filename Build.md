@@ -1,31 +1,31 @@
 # Dependencies
 1. Install **node** (skip if you have node already)
 
-   You could install using brew if you are on Mac: 
+   You could install using brew if you are on Mac:
 
-   ```
+   ```shell
    brew install node
    ```
 
-   Alternatively, you can download node here: https://nodejs.org/en/download/. Npm is included when you install node. 
+   Alternatively, you can download node here: https://nodejs.org/en/. Npm is included when you install node.
 
 2. Change directory to the backend and npm install
 
-   ```
+   ```shell
    cd ESM-Server
    npm install
    ```
 
 3. Change direcotry to the frontend and npm install
 
-   ```
+   ```shell
    cd esm-app
    npm install
    ```
 
 
 
-# Set Up MySQL Database 
+# Set Up MySQL Database
 
 1. Please install MAMP (for Mac) or WAMP (for windows), or any MySQL server and run it on localhost.
 
@@ -41,19 +41,19 @@
    CREATE DATABASE EmailSubscriptionManager;
    ```
 
-4. Go to the new database: 
+4. Go to the new database:
 
    ```mysql
    USE EmailSubscriptionManager;
    ```
 
-5. Create a new table: 
+5. Create a new table:
 
    ```mysql
    CREATE TABLE all_links (user VARCHAR(500) NOT NULL, vendor VARCHAR(500) NOT NULL, link VARCHAR(10000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
    ```
 
-6. Grant privileges to the user: 
+6. Grant privileges to the user:
 
    ```mysql
    GRANT SELECT, INSERT, DELETE, CREATE, UPDATE ON database.* TO ESMUser@localhost;
@@ -81,7 +81,7 @@ var DBPORT = INSERT YOUR MYSQL PORT HERE;
 ### Starting Backend Server
 
 Start terminal and change directory to the backend. Then start the server.
-```
+```shell
 cd ESM-Server
 node index.js
 ```
@@ -91,7 +91,7 @@ Backend server should be running at: http://localhost:4000/
 
 Start a new terminal, change directory to the frontend.
 
-```
+```shell
 cd esm-app
 npm start
 ```
@@ -102,7 +102,7 @@ A new window on your default browser should pop up. If this does not occur pleas
 
 # Contact
 
-We tested the build process on both Mac and Windows machines and it should work. Please kindly let us know if any problem happens. 
+We tested the build process on both Mac and Windows machines and it should work. Please kindly let us know if any problem happens.
 
 
 * Bixing Xie (bx357@nyu.edu)
