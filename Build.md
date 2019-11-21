@@ -41,19 +41,14 @@
    CREATE DATABASE EmailSubscriptionManager;
    ```
 
-4. Go to the new database:
+4. Go to the new database and create a new table:
 
    ```mysql
    USE EmailSubscriptionManager;
-   ```
-
-5. Create a new table:
-
-   ```mysql
    CREATE TABLE all_links (user VARCHAR(500) NOT NULL, vendor VARCHAR(500) NOT NULL, link VARCHAR(10000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
    ```
 
-6. Grant privileges to the user:
+5. Grant privileges to the user:
 
    ```mysql
    GRANT SELECT, INSERT, DELETE, CREATE, UPDATE ON database.* TO ESMUser@localhost;
