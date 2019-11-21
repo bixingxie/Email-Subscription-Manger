@@ -16,7 +16,7 @@
    npm install
    ```
 
-3. Change direcotry to the frontend and npm install
+3. Change directory to the frontend and npm install
 
    ```
    cd esm-app
