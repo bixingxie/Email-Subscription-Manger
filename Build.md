@@ -66,14 +66,21 @@ If you have node.js installed skip to step 6.
 
    Please install MAMP (for Mac) or WAMP (for windows), or any MySQL server.
 
-   Set up the **database schema**:
+   Set up the **user**:
+
+   ```sql
+   CREATE USER 'ESMUser'@'localhost' IDENTIFIED BY 'ESMPassword';
+   ```
+
+   Set up the **database schema** and move to that schema:
 
    ```sql
    CREATE DATABASE EmailSubscriptionManager;
+   USE EmailSubscriptionManager;
    ```
 
    ```sql
-   CREATE TABLE all_links (user VARCHAR(500) NOT NULL, vendor VARCHAR(10000) NOT NULL, link VARCHAR(10000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
+   CREATE TABLE all_links (user VARCHAR(500) NOT NULL, vendor VARCHAR(500) NOT NULL, link VARCHAR(10000) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
    ```
 
    Set up the **database user**:
@@ -84,7 +91,18 @@ If you have node.js installed skip to step 6.
 
    Give the user right **privileges**:
 
-   Go to the database(EmailSubscriptionManager) we just created, click **Privileges** on the navigation bar, click **Edit Privileges** under **Action** for **ESMUser**, and grant it all privileges.
+   Go to the database(EmailSubscriptionManager) we just created, click **Privileges** on the navigation bar, click **Edit Privileges** under **Action** for **ESMUser**, and grant it at least SELECT, INSERT, DELETE, CREATE, UPDATE privileges. Or you can run the following query:
+
+   ```sql
+   GRANT SELECT, INSERT, DELETE, CREATE, UPDATE ON `database`.* TO `ESMUser`@`localhost`;
+   ```
+
+Note: If you encounter the ERROR 1396 (HY000): Operation CREATE USER failed, when adding a user you have just dropped before, it is caused by a bug from MySQL. You can get around it with the following instruction:
+   ```sql
+   drop user ESMUser@localhost;
+   flush privileges;
+   create user ESMUser@localhost identified by 'password'
+   ```
 
 # Build
 
@@ -116,22 +134,6 @@ npm start
 A new window on your default browser should pop up. If this does not occur please, open any web browser and visit http://localhost:3000/
 
 ## Contact
-
-
-1.  CREATE USER 'ESMUser'@'localhost' IDENTIFIED BY 'ESMPassword';
-
-2.  CREATE DATABASE EmailSubscriptionManager;
-
-3.  USE EmailSubscriptionManager;
-
-4.  CREATE TABLE all_links (user VARCHAR(300) NOT NULL, vendor VARCHAR(500) NOT NULL, link VARCHAR(2200) NOT NULL, last_modified timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, unsubscribed BOOLEAN not null DEFAULT 0, PRIMARY KEY(user, vendor));
-
-5.  GRANT SELECT, INSERT, DELETE, CREATE, UPDATE ON `database`.* TO `ESMUser`@`localhost`;
-
-Note: If you encounter the ERROR 1396 (HY000): Operation CREATE USER failed, when adding a user you have just dropped before, it is caused by a bug from MySQL. You can get around it with the following instruction:
-    1.  drop user ESMUser@localhost;
-    2.  flush privileges;
-    3.  create user ESMUser@localhost identified by 'password'
 
 
 * Bixing Xie (bx357@nyu.edu)
