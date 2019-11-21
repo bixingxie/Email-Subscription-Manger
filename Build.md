@@ -51,7 +51,7 @@
 5. Grant privileges to the user:
 
    ```mysql
-   GRANT SELECT, INSERT, DELETE, CREATE, UPDATE ON database.* TO ESMUser@localhost;
+   GRANT SELECT, INSERT, DELETE, CREATE, UPDATE ON EmailSubscriptionManager.* TO ESMUser@localhost
    ```
 
 **Note**: If you encounter the ERROR 1396 (HY000): Operation CREATE USER failed, when adding a user you have just dropped before, it is caused by a bug from MySQL. You can get around it with the following instruction:
