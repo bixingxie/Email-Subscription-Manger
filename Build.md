@@ -67,8 +67,6 @@ flush privileges;
 create user ESMUser@localhost identified by 'password'
 ```
 
-
-
 # Build
 
 ### Database
