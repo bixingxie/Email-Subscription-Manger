@@ -64,7 +64,7 @@
 ```mysql
 drop user ESMUser@localhost;
 flush privileges;
-create user ESMUser@localhost identified by 'password'
+create user ESMUser@localhost identified by 'ESMPassword'
 ```
 
 # Build
